@@ -1,101 +1,165 @@
 #include <stdio.h>
-#include <string.h>
+
 #define NOB_IMPLEMENTATION
 #include "nob.h"
 
+#define ArraySize(ARR) (sizeof(ARR)/sizeof(ARR[0]))
+
+#define CC "cc"
+
 #define BUILD_DIR "build"
-#define SRC_DIR "src"
-
-#define COMPILER_ARGS \
-  X(-Wall)\
-  X(-Wextra)\
-  X(-xc)\
-  X(-std=c99)\
-
-#define LINKER_ARGS \
-  X(-Wall)\
-  X(-Wextra)\
-
 #define O_FILE "main"
 
-bool compile_obj(Nob_Walk_Entry entry)
+typedef struct GDef{
+    const char* def;
+    const char* val;
+}GDef;
+
+static const char* src_dirs[] = 
 {
-  Cmd cmd = {0};
-  size_t len = strlen(entry.path);
+    "src",
+    //add here your sources directory like ThirdParty dependencies sources
+};
 
-  if(
-      entry.type == NOB_FILE_REGULAR &&
-      !strncmp(entry.path + len - 2, ".c", 2)
-    )
-  {
-#define X(arg) #arg,
-    cmd_append(&cmd, "cc", COMPILER_ARGS "-c", entry.path);
-#undef X
+static const char* compiler_opts[] = 
+{
+    "-Wall",
+    "-Wextra",
+    //add here your compiler options: -c, -ggdb, -O2, ...
+};
 
-    if (!cmd_run(&cmd)) return true;
-  }
+static const char* linker_opts[] = 
+{
+    //add here your compiler options: -lm, -lgdb, ...
+};
 
-  return true;
+static const char* include_path[] =
+{
+    //add here your include path: -I...
+    //consider the root of the project the starting source path
+};
+
+static const GDef global_defs[] =
+{
+    //add here your global definitions: -DVAR=VALUE == (GDef) {.def="VAR", .val="VALUE"}
+};
+
+static bool f_compile(Walk_Entry entry)
+{
+    bool res=true;
+
+    if(entry.type == FILE_REGULAR)
+    {
+        Cmd cmd = {0};
+        const char* file_name = nob_temp_file_name(entry.path);
+
+        cmd_append(&cmd, CC);
+
+        //compiler options
+        for(size_t i=0; i < ArraySize(compiler_opts); i++)
+        {
+            if(compiler_opts[i]) cmd_append(&cmd, compiler_opts[i]);
+        }
+
+        //include path
+        for(size_t i=0; i < ArraySize(include_path); i++)
+        {
+            if(include_path[i]) cmd_append(&cmd, temp_sprintf("-I%s", include_path[i]));
+        }
+
+        //global definitions
+        for(size_t i=0; i < ArraySize(global_defs); i++)
+        {
+            const GDef* def = &global_defs[i];
+            if(def && def->def)
+            {
+                if(def->val)
+                {
+                    cmd_append(&cmd, temp_sprintf("-D%s", def->def));
+                }
+                else
+                {
+                    cmd_append(&cmd, temp_sprintf("-D%s=%s", def->def, def->val));
+                }
+            }
+        }
+
+        cmd_append(&cmd, "-c");
+        cmd_append(&cmd, "-o", temp_sprintf("%s/%.*s.o", BUILD_DIR, (int) strlen(file_name)-2, file_name));
+
+        cmd_append(&cmd, entry.path);
+
+        res = cmd_run(&cmd);
+
+        cmd_free(cmd);
+    }
+
+    return res;
+}
+
+static bool f_link(void)
+{
+    Dir_Entry dir = {0};
+    Cmd cmd = {0};
+    bool res = true;
+
+    if(!dir_entry_open(BUILD_DIR, &dir)) return false;
+
+    cmd_append(&cmd, CC);
+
+    //linker options
+    for(size_t i=0; i < ArraySize(linker_opts); i++)
+    {
+        if(linker_opts[i]) cmd_append(&cmd, linker_opts[i]);
+    }
+
+    cmd_append(&cmd, "-o", O_FILE);
+
+    while(dir_entry_next(&dir))
+    {
+        const char* file_path = temp_sprintf("%s/%s", BUILD_DIR, dir.name);
+        if (FILE_REGULAR == get_file_type(file_path))
+        {
+            printf("found %s\n", file_path);
+            cmd_append(&cmd, file_path);
+        }
+    }
+
+    res = cmd_run(&cmd);
+
+    dir_entry_close(dir);
+    cmd_free(cmd);
+    return res;
 }
 
 int main(int argc, char **argv)
 {
-  GO_REBUILD_URSELF(argc, argv);
+    GO_REBUILD_URSELF(argc, argv);
 
-  Cmd cmd = {0};
-  Dir_Entry dir = {0};
-  char src_dir[PATH_MAX] = {0};
-  char build_dir[PATH_MAX] = {0};
+    printf("build directory: %s\n", BUILD_DIR);
+    printf("output file: %s\n", O_FILE);
 
-  const char* pwd = get_current_dir_temp();
+    mkdir_if_not_exists(BUILD_DIR);
 
-  snprintf(src_dir, sizeof(src_dir), "%s/"SRC_DIR, pwd);
-  snprintf(build_dir, sizeof(build_dir), "%s/"BUILD_DIR, pwd);
-
-#define X(arg) #arg
-  nob_log(INFO, "compile args: %s", COMPILER_ARGS);
-  nob_log(INFO, "linker args: %s", LINKER_ARGS);
-#undef X
-  nob_log(INFO, "output_file: %s", O_FILE);
-  nob_log(INFO, "src dir: %s", src_dir);
-  nob_log(INFO, "build dir: %s", build_dir);
-
-  mkdir_if_not_exists(BUILD_DIR);
-  set_current_dir(BUILD_DIR);
-  
-  if(!walk_dir(src_dir, compile_obj))
-  {
-    printf("error compiling\n");
-    return 1;
-  }
-
-#define X(arg) #arg, 
-  cmd_append(&cmd, "cc", LINKER_ARGS "-o", O_FILE);
-#undef X
-
-  if(!dir_entry_open(build_dir, &dir))
-  {
-    printf("failed open build dir\n");
-    return 2;
-  }
-
-  while(dir_entry_next(&dir))
-  {
-    int len = strlen(dir.name);
-    if(
-        strncmp(dir.name, "..", 2) &&
-        strncmp(dir.name, ".", 1) &&
-        !strncmp(dir.name + len - 2, ".o", 2))
+    //source directories
+    for(size_t i=0; i < ArraySize(src_dirs); i++)
     {
-      cmd_append(&cmd, dir.name);
+        if(src_dirs[i])
+        {
+            printf("compiling sources in src: %s\n", src_dirs[i]);
+            if(!walk_dir(src_dirs[i], f_compile))
+            {
+                fprintf(stderr, "failed compiling sources in %s\n", src_dirs[i]);
+                return 1;
+            }
+        }
     }
-  }
-  dir_entry_close(dir);
 
+    if(!f_link())
+    {
+        fprintf(stderr, "failed liking\n");
+        return 1;
+    }
 
-  if (!cmd_run(&cmd)) return 1;
-
-  set_current_dir(pwd);
-  copy_file(BUILD_DIR"/main", "./main");
   return 0;
 }
