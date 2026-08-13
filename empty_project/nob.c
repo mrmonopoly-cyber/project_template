@@ -75,11 +75,11 @@ static bool f_compile(Walk_Entry entry)
             {
                 if(def->val)
                 {
-                    cmd_append(&cmd, temp_sprintf("-D%s", def->def));
+                    cmd_append(&cmd, temp_sprintf("-D%s=%s", def->def, def->val));
                 }
                 else
                 {
-                    cmd_append(&cmd, temp_sprintf("-D%s=%s", def->def, def->val));
+                    cmd_append(&cmd, temp_sprintf("-D%s", def->def));
                 }
             }
         }
