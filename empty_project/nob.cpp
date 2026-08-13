@@ -5,7 +5,7 @@
 
 #define ArraySize(ARR) (sizeof(ARR)/sizeof(ARR[0]))
 
-#define CC "cc"
+#define CXX "c++"
 
 #define BUILD_DIR "build"
 #define O_FILE "main"
@@ -53,7 +53,7 @@ static bool f_compile(Walk_Entry entry)
         Cmd cmd = {0};
         const char* file_name = nob_temp_file_name(entry.path);
 
-        cmd_append(&cmd, CC);
+        cmd_append(&cmd, CXX);
 
         //compiler options
         for(size_t i=0; i < ArraySize(compiler_opts); i++)
@@ -75,11 +75,11 @@ static bool f_compile(Walk_Entry entry)
             {
                 if(def->val)
                 {
-                    cmd_append(&cmd, temp_sprintf("-D%s", def->def));
+                    cmd_append(&cmd, temp_sprintf("-D%s=%s", def->def, def->val));
                 }
                 else
                 {
-                    cmd_append(&cmd, temp_sprintf("-D%s=%s", def->def, def->val));
+                    cmd_append(&cmd, temp_sprintf("-D%s", def->def));
                 }
             }
         }
@@ -105,7 +105,7 @@ static bool f_link(void)
 
     if(!dir_entry_open(BUILD_DIR, &dir)) return false;
 
-    cmd_append(&cmd, CC);
+    cmd_append(&cmd, CXX);
 
     //linker options
     for(size_t i=0; i < ArraySize(linker_opts); i++)
