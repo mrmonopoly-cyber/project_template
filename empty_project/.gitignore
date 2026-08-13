@@ -4,3 +4,5 @@ main
 compile_command.json
 nob
 nob.old
+build/
+compile_commands.json

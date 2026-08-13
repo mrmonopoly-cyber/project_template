@@ -25,11 +25,13 @@ static const char* compiler_opts[] =
 {
     "-Wall",
     "-Wextra",
+    "-std=c++23",
     //add here your compiler options: -c, -ggdb, -O2, ...
 };
 
 static const char* linker_opts[] = 
 {
+
     //add here your compiler options: -lm, -lgdb, ...
 };
 
@@ -85,7 +87,7 @@ static bool f_compile(Walk_Entry entry)
         }
 
         cmd_append(&cmd, "-c");
-        cmd_append(&cmd, "-o", temp_sprintf("%s/%.*s.o", BUILD_DIR, (int) strlen(file_name)-2, file_name));
+        cmd_append(&cmd, "-o", temp_sprintf("%s/%.*s.o", BUILD_DIR, (int) strlen(file_name)-4, file_name));
 
         cmd_append(&cmd, entry.path);
 
