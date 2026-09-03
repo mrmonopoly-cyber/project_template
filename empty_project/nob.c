@@ -1,48 +1,12 @@
 #include <stdio.h>
 
+
+#define DEFS_IMPLEMENTATION
+#include "BuildDependencies/defs.h"
+
 #define NOB_IMPLEMENTATION
-#include "nob.h"
+#include "BuildDependencies/nob.h"
 
-#define ArraySize(ARR) (sizeof(ARR)/sizeof(ARR[0]))
-
-#define CC "cc"
-
-#define BUILD_DIR "build"
-#define O_FILE "main"
-
-typedef struct GDef{
-    const char* def;
-    const char* val;
-}GDef;
-
-static const char* src_dirs[] = 
-{
-    "src",
-    //add here your sources directory like ThirdParty dependencies sources
-};
-
-static const char* compiler_opts[] = 
-{
-    "-Wall",
-    "-Wextra",
-    //add here your compiler options: -c, -ggdb, -O2, ...
-};
-
-static const char* linker_opts[] = 
-{
-    //add here your compiler options: -lm, -lgdb, ...
-};
-
-static const char* include_path[] =
-{
-    //add here your include path: -I...
-    //consider the root of the project the starting source path
-};
-
-static const GDef global_defs[] =
-{
-    //add here your global definitions: -DVAR=VALUE == (GDef) {.def="VAR", .val="VALUE"}
-};
 
 static bool f_compile(Walk_Entry entry)
 {
@@ -56,21 +20,20 @@ static bool f_compile(Walk_Entry entry)
         cmd_append(&cmd, CC);
 
         //compiler options
-        for(size_t i=0; i < ArraySize(compiler_opts); i++)
+        FOR_EACH_FAT_ARRAY_STR(default_compiler_opts(), opt)
         {
-            if(compiler_opts[i]) cmd_append(&cmd, compiler_opts[i]);
+            if(opt) cmd_append(&cmd, opt);
         }
 
         //include path
-        for(size_t i=0; i < ArraySize(include_path); i++)
+        FOR_EACH_FAT_ARRAY_STR(default_include_path_opts(), path)
         {
-            if(include_path[i]) cmd_append(&cmd, temp_sprintf("-I%s", include_path[i]));
+            if(path) cmd_append(&cmd, temp_sprintf("-I%s", path));
         }
 
         //global definitions
-        for(size_t i=0; i < ArraySize(global_defs); i++)
+        FOR_EACH_FAT_ARRAY(default_global_defs_opts(), def)
         {
-            const GDef* def = &global_defs[i];
             if(def && def->def)
             {
                 if(def->val)
@@ -108,9 +71,9 @@ static bool f_link(void)
     cmd_append(&cmd, CC);
 
     //linker options
-    for(size_t i=0; i < ArraySize(linker_opts); i++)
+    FOR_EACH_FAT_ARRAY_STR(default_linker_opts(), opt)
     {
-        if(linker_opts[i]) cmd_append(&cmd, linker_opts[i]);
+        if(opt) cmd_append(&cmd, opt);
     }
 
     cmd_append(&cmd, "-o", O_FILE);
@@ -142,14 +105,14 @@ int main(int argc, char **argv)
     mkdir_if_not_exists(BUILD_DIR);
 
     //source directories
-    for(size_t i=0; i < ArraySize(src_dirs); i++)
+    FOR_EACH_FAT_ARRAY_STR(default_src_dir_opts(), dir)
     {
-        if(src_dirs[i])
+        if(dir)
         {
-            printf("compiling sources in src: %s\n", src_dirs[i]);
-            if(!walk_dir(src_dirs[i], f_compile))
+            printf("compiling sources in src: %s\n", dir);
+            if(!walk_dir(dir, f_compile))
             {
-                fprintf(stderr, "failed compiling sources in %s\n", src_dirs[i]);
+                fprintf(stderr, "failed compiling sources in %s\n", dir);
                 return 1;
             }
         }
