@@ -1,6 +1,3 @@
-#include <stdio.h>
-
-
 #define DEFS_IMPLEMENTATION
 #include "BuildDependencies/defs.h"
 
@@ -19,33 +16,7 @@ static bool f_compile(Walk_Entry entry)
 
         cmd_append(&cmd, CC);
 
-        //compiler options
-        FOR_EACH_FAT_ARRAY_STR(default_compiler_opts(), opt)
-        {
-            if(opt) cmd_append(&cmd, opt);
-        }
-
-        //include path
-        FOR_EACH_FAT_ARRAY_STR(default_include_path_opts(), path)
-        {
-            if(path) cmd_append(&cmd, temp_sprintf("-I%s", path));
-        }
-
-        //global definitions
-        FOR_EACH_FAT_ARRAY(default_global_defs_opts(), def)
-        {
-            if(def && def->def)
-            {
-                if(def->val)
-                {
-                    cmd_append(&cmd, temp_sprintf("-D%s=%s", def->def, def->val));
-                }
-                else
-                {
-                    cmd_append(&cmd, temp_sprintf("-D%s", def->def));
-                }
-            }
-        }
+        apply_all_defualt_compile_opts(&cmd);
 
         cmd_append(&cmd, "-c");
         cmd_append(&cmd, "-o", temp_sprintf("%s/%.*s.o", BUILD_DIR, (int) strlen(file_name)-2, file_name));
@@ -70,11 +41,7 @@ static bool f_link(void)
 
     cmd_append(&cmd, CC);
 
-    //linker options
-    FOR_EACH_FAT_ARRAY_STR(default_linker_opts(), opt)
-    {
-        if(opt) cmd_append(&cmd, opt);
-    }
+    apply_all_defualt_linker_opts(&cmd);
 
     cmd_append(&cmd, "-o", O_FILE);
 
@@ -99,8 +66,8 @@ int main(int argc, char **argv)
 {
     GO_REBUILD_URSELF(argc, argv);
 
-    printf("build directory: %s\n", BUILD_DIR);
-    printf("output file: %s\n", O_FILE);
+    nob_log(INFO, "build directory: %s\n", BUILD_DIR);
+    nob_log(INFO, "output file: %s\n", O_FILE);
 
     mkdir_if_not_exists(BUILD_DIR);
 
@@ -112,7 +79,7 @@ int main(int argc, char **argv)
             printf("compiling sources in src: %s\n", dir);
             if(!walk_dir(dir, f_compile))
             {
-                fprintf(stderr, "failed compiling sources in %s\n", dir);
+                nob_log(ERROR, "failed compiling sources in %s", dir);
                 return 1;
             }
         }
@@ -120,7 +87,7 @@ int main(int argc, char **argv)
 
     if(!f_link())
     {
-        fprintf(stderr, "failed liking\n");
+        nob_log(ERROR, "failed liking");
         return 1;
     }
 
