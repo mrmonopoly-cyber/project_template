@@ -64,7 +64,9 @@ static bool f_link(void)
 
 int main(int argc, char **argv)
 {
-    GO_REBUILD_URSELF(argc, argv);
+    GO_REBUILD_URSELF_PLUS(argc, argv,
+            "./BuildDependencies/defs.h"
+            );
 
     nob_log(INFO, "build directory: %s\n", BUILD_DIR);
     nob_log(INFO, "output file: %s\n", O_FILE);

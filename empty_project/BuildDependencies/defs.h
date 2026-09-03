@@ -50,11 +50,14 @@ typedef FAT_ARRAY_TEMPLATE(GDef)    ArrayViewGDef;
 
 //==================================functions declarations======================================
 
+void apply_global_definitions(Cmd* cmd, ArrayViewGDef defs);
+
 ArrayViewString default_src_dir_opts(void);
 ArrayViewString default_compiler_opts(void);
 ArrayViewString default_linker_opts(void);
 ArrayViewString default_include_path_opts(void);
 ArrayViewGDef default_global_defs_opts(void);
+
 
 void apply_all_defualt_compile_opts(Cmd* cmd);
 void apply_all_defualt_linker_opts(Cmd* cmd);
@@ -62,6 +65,25 @@ void apply_all_defualt_linker_opts(Cmd* cmd);
 //================================implementation================================================
 
 #ifdef DEFS_IMPLEMENTATION
+
+void apply_global_definitions(Cmd* cmd, ArrayViewGDef defs)
+{
+    assert(cmd);
+
+    FOR_EACH_FAT_ARRAY(defs, def)
+    {
+        if(def && def->def)
+        {
+            cmd_append(cmd, temp_sprintf("-D%s=%s", def->def, def->val));
+        }
+        else
+        {
+            cmd_append(cmd, temp_sprintf("-D%s", def->def));
+        }
+    }
+
+
+}
 
 void apply_all_defualt_compile_opts(Cmd* cmd)
 {
@@ -80,20 +102,7 @@ void apply_all_defualt_compile_opts(Cmd* cmd)
     }
 
     //global definitions
-    FOR_EACH_FAT_ARRAY(default_global_defs_opts(), def)
-    {
-        if(def && def->def)
-        {
-            if(def->val)
-            {
-                cmd_append(cmd, temp_sprintf("-D%s=%s", def->def, def->val));
-            }
-            else
-            {
-                cmd_append(cmd, temp_sprintf("-D%s", def->def));
-            }
-        }
-    }
+    apply_global_definitions(cmd, default_global_defs_opts());
 }
 
 void apply_all_defualt_linker_opts(Cmd* cmd)
