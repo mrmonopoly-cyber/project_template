@@ -1,3 +1,4 @@
+#include <string.h>
 #define DEFS_IMPLEMENTATION
 #include "BuildDependencies/defs.h"
 
@@ -9,10 +10,12 @@ static bool f_compile(Walk_Entry entry)
 {
     bool res=true;
 
-    if(entry.type == FILE_REGULAR)
+    if(entry.type == FILE_REGULAR && file_has_suffix_with_null(entry.path, ".c"))
     {
         Cmd cmd = {0};
         const char* file_name = nob_temp_file_name(entry.path);
+        const size_t len_file_name = strlen(file_name);
+        const char* suffix = file_name + len_file_name - 2;
 
         cmd_append(&cmd, CC);
 
@@ -48,7 +51,10 @@ static bool f_link(void)
     while(dir_entry_next(&dir))
     {
         const char* file_path = temp_sprintf("%s/%s", BUILD_DIR, dir.name);
-        if (FILE_REGULAR == get_file_type(file_path))
+        if (
+                get_file_type(file_path) ==  FILE_REGULAR &&
+                file_has_suffix_with_null(file_path, ".o")
+           )
         {
             printf("found %s\n", file_path);
             cmd_append(&cmd, file_path);

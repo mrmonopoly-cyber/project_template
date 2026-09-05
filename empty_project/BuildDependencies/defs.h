@@ -1,18 +1,35 @@
 #pragma once
 
-//==================================macros======================================================
+//==================================dependencies================================================
 
 #include <assert.h>
 #include <stddef.h>
+#include <string.h>
 
 #include "nob.h"
 
+//==================================macros======================================================
+
 #define ArraySize(ARR) (sizeof(ARR)/sizeof(ARR[0]))
 
+#ifndef CC
 #define CC "cc"
+#endif // !CC
 
-#define BUILD_DIR "build"
+#ifndef PROJECT_ROOT
+#define PROJECT_ROOT "."
+#endif // !PROJECT_ROOT
+
+#ifndef O_FILE
 #define O_FILE "main"
+#endif // !O_FILE
+
+#ifndef BUILD_DIR
+#define BUILD_DIR "build"
+#endif // !BUILD_DIR
+
+#define THIRDPARTY PROJECT_ROOT"/ThirdParty"
+#define BUILD_DEPS PROJECT_ROOT"/BuildDependencies"
 
 #define FAT_ARRAY_TEMPLATE(T)           \
 struct                                  \
@@ -44,7 +61,6 @@ typedef struct GDef{
     const char* val;
 }GDef;
 
-typedef FAT_ARRAY_TEMPLATE(void)    ArrayViewVoid;
 typedef FAT_ARRAY_TEMPLATE(char*)   ArrayViewString;
 typedef FAT_ARRAY_TEMPLATE(GDef)    ArrayViewGDef;
 
@@ -58,9 +74,19 @@ ArrayViewString default_linker_opts(void);
 ArrayViewString default_include_path_opts(void);
 ArrayViewGDef default_global_defs_opts(void);
 
-
 void apply_all_defualt_compile_opts(Cmd* cmd);
 void apply_all_defualt_linker_opts(Cmd* cmd);
+
+bool file_has_suffix(
+        const char* const restrict file_name, const size_t len_file_name,
+        const char* const restrict suffix, const size_t len_suffix);
+
+static inline bool file_has_suffix_with_null(
+        const char* const restrict file_name,
+        const char* const restrict suffix)
+{
+    return file_has_suffix(file_name, strlen(file_name), suffix, strlen(suffix));
+}
 
 //================================implementation================================================
 
@@ -120,7 +146,7 @@ ArrayViewString default_src_dir_opts(void)
 {
     static const char* opts[] = 
     {
-        "src",
+        PROJECT_ROOT"/src",
         //add here your sources directory like ThirdParty dependencies sources
     };
 
@@ -168,6 +194,15 @@ ArrayViewGDef default_global_defs_opts(void)
     };
 
     return (ArrayViewGDef) FAT_ARRAY_INIT(opts);
+}
+
+bool file_has_suffix(
+        const char* file_name, const size_t len_file_name,
+        const char* suffix, const size_t len_suffix)
+{
+    const char* file_name_suffix = file_name + len_file_name - len_suffix;
+
+    return !strcmp(file_name_suffix, suffix);
 }
 
 #endif // DEFS_IMPLEMENTATION
