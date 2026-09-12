@@ -2,15 +2,20 @@
 #define DEFS_IMPLEMENTATION
 #include "BuildDependencies/defs.h"
 
+#define CLI_IMPLEMENTATION
+#include "BuildDependencies/cli.h"
+
 #define NOB_IMPLEMENTATION
 #include "BuildDependencies/nob.h"
+
+static CliArgs args;
 
 
 static bool f_compile(Walk_Entry entry)
 {
     bool res=true;
 
-    if(entry.type == FILE_REGULAR && file_has_suffix_with_null(entry.path, ".c"))
+    if( entry.type == FILE_REGULAR && file_has_suffix_with_null(entry.path, ".c") )
     {
         Cmd cmd = {0};
         const char* file_name = nob_temp_file_name(entry.path);
@@ -40,7 +45,7 @@ static bool f_link(void)
     Cmd cmd = {0};
     bool res = true;
 
-    if(!dir_entry_open(BUILD_DIR, &dir)) return false;
+    if( !dir_entry_open(BUILD_DIR, &dir) ) return false;
 
     cmd_append(&cmd, CC);
 
@@ -48,7 +53,7 @@ static bool f_link(void)
 
     cmd_append(&cmd, "-o", O_FILE);
 
-    while(dir_entry_next(&dir))
+    while( dir_entry_next(&dir) )
     {
         const char* file_path = temp_sprintf("%s/%s", BUILD_DIR, dir.name);
         if (
@@ -68,34 +73,117 @@ static bool f_link(void)
     return res;
 }
 
+static bool f_run()
+{
+    bool res= false;
+    Cmd cmd = {0};
+
+    cmd_append(&cmd, "./"O_FILE);
+
+    res = cmd_run(&cmd);
+
+
+    cmd_free(cmd);
+    return res;
+}
+
+static bool _walk_delete(Walk_Entry entry)
+{
+    if ( entry.type != FILE_DIRECTORY )
+    {
+        delete_file(entry.path);
+    }
+
+    return true;
+}
+
+static bool f_clean()
+{
+    bool res= false;
+    Cmd cmd = {0};
+
+    if ( file_exists(O_FILE) ) delete_file(O_FILE);
+
+    if ( !(res = walk_dir(BUILD_DIR, _walk_delete)) ) goto end;
+    delete_file(BUILD_DIR);
+
+end:
+    cmd_free(cmd);
+    return res;
+}
+
+static bool f_clean_nob(const char* prog_name_path)
+{
+    const char* old = temp_sprintf("%s.old", prog_name_path);
+
+    delete_file(prog_name_path);
+    if ( file_exists(old) ) delete_file(old);
+
+    return true;
+}
+
 int main(int argc, char **argv)
 {
     GO_REBUILD_URSELF_PLUS(argc, argv,
+            "./BuildDependencies/c_cli.h",
+            "./BuildDependencies/cli.h",
+
             "./BuildDependencies/defs.h"
             );
 
-    nob_log(INFO, "build directory: %s\n", BUILD_DIR);
-    nob_log(INFO, "output file: %s\n", O_FILE);
+
+    if ( !cli_parse(&args, argc, argv) )
+    {
+        return 1;
+    }
+
+    nob_log(INFO, "build directory: %s", BUILD_DIR);
+    nob_log(INFO, "output file: %s", O_FILE);
 
     mkdir_if_not_exists(BUILD_DIR);
 
-    //source directories
-    FOR_EACH_FAT_ARRAY_STR(default_src_dir_opts(), dir)
+    if (
+            args.build ||
+            ( args.run && !file_exists(O_FILE) )
+       )
     {
-        if(dir)
+        //source directories
+        FOR_EACH_FAT_ARRAY_STR(default_src_dir_opts(), dir)
         {
-            printf("compiling sources in src: %s\n", dir);
-            if(!walk_dir(dir, f_compile))
+            if( dir )
             {
-                nob_log(ERROR, "failed compiling sources in %s", dir);
-                return 1;
+                printf("compiling sources in src: %s\n", dir);
+                if( !walk_dir(dir, f_compile) )
+                {
+                    nob_log(ERROR, "failed compiling sources in %s", dir);
+                    return 1;
+                }
             }
+        }
+
+        if( !f_link() )
+        {
+            nob_log(ERROR, "failed liking");
+            return 1;
         }
     }
 
-    if(!f_link())
+
+    if ( args.run && !f_run() )
     {
-        nob_log(ERROR, "failed liking");
+        nob_log(ERROR, "failed running");
+        return 1;
+    }
+
+    if ( args.clean && !f_clean() )
+    {
+        nob_log(ERROR, "failed cleaning");
+        return 1;
+    }
+    
+    if ( args.clean_all && !f_clean_nob(argv[0]) )
+    {
+        nob_log(ERROR, "failed cleaning nob");
         return 1;
     }
 

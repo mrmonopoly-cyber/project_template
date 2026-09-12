@@ -159,6 +159,7 @@ ArrayViewString default_compiler_opts(void)
     {
         "-Wall",
         "-Wextra",
+        "-xc",
         //add here your compiler options: -c, -ggdb, -O2, ...
     };
 
@@ -169,6 +170,7 @@ ArrayViewString default_linker_opts(void)
 {
     static const char* opts[] = 
     {
+        "-xnone",
         //add here your compiler options: -lm, -lgdb, ...
     };
 
