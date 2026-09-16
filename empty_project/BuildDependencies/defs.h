@@ -88,6 +88,8 @@ static inline bool file_has_suffix_with_null(
     return file_has_suffix(file_name, strlen(file_name), suffix, strlen(suffix));
 }
 
+bool program_exsists_on_path(const char* program_name);
+
 //================================implementation================================================
 
 #ifdef DEFS_IMPLEMENTATION
@@ -140,6 +142,21 @@ void apply_all_defualt_linker_opts(Cmd* cmd)
         if(opt) cmd_append(cmd, opt);
     }
 
+}
+
+bool program_exsists_on_path(const char* program_name)
+{
+    bool res=false;
+    Cmd cmd = {0};
+
+    cmd_append(&cmd, "bash");
+    cmd_append(&cmd, "-c");
+    cmd_append(&cmd, temp_sprintf("command -v %s", program_name));
+
+    res = cmd_run(&cmd);
+
+    cmd_free(cmd);
+    return res;
 }
 
 ArrayViewString default_src_dir_opts(void)
