@@ -1,11 +1,5 @@
-#include <string.h>
-#define DEFS_IMPLEMENTATION
 #include "BuildDependencies/defs.h"
-
-#define CLI_IMPLEMENTATION
 #include "BuildDependencies/cli.h"
-
-#define NOB_IMPLEMENTATION
 #include "BuildDependencies/nob.h"
 
 static CliArgs args;
@@ -19,15 +13,14 @@ static bool f_compile(Walk_Entry entry)
     {
         Cmd cmd = {0};
         const char* file_name = nob_temp_file_name(entry.path);
-        const size_t len_file_name = strlen(file_name);
-        const char* suffix = file_name + len_file_name - 2;
 
         cmd_append(&cmd, CC);
 
         apply_all_defualt_compile_opts(&cmd);
 
         cmd_append(&cmd, "-c");
-        cmd_append(&cmd, "-o", temp_sprintf("%s/%.*s.o", BUILD_DIR, (int) strlen(file_name)-2, file_name));
+        cmd_append(&cmd, "-o",
+                temp_sprintf("%s/%.*s.o", BUILD_DIR, (int) strlen(file_name)-2, file_name));
 
         cmd_append(&cmd, entry.path);
 
@@ -61,7 +54,7 @@ static bool f_link(void)
                 file_has_suffix_with_null(file_path, ".o")
            )
         {
-            printf("found %s\n", file_path);
+            nob_log(INFO, "found %s", file_path);
             cmd_append(&cmd, file_path);
         }
     }
@@ -152,7 +145,7 @@ int main(int argc, char **argv)
         {
             if( dir )
             {
-                printf("compiling sources in src: %s\n", dir);
+                nob_log(INFO, "compiling sources in src: %s", dir);
                 if( !walk_dir(dir, f_compile) )
                 {
                     nob_log(ERROR, "failed compiling sources in %s", dir);
@@ -189,3 +182,12 @@ int main(int argc, char **argv)
 
   return 0;
 }
+
+#define DEFS_IMPLEMENTATION
+#include "BuildDependencies/defs.h"
+
+#define CLI_IMPLEMENTATION
+#include "BuildDependencies/cli.h"
+
+#define NOB_IMPLEMENTATION
+#include "BuildDependencies/nob.h"
