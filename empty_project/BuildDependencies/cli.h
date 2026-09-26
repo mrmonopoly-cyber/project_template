@@ -6,6 +6,8 @@
 #define CCLI_PREFIX CLI_PREFIX
 #include "c_cli.h"
 
+#ifndef CLI_TYPES
+#define CLI_TYPES
 typedef struct CCliUserArgs{
     bool verbose;
     bool help;
@@ -14,6 +16,7 @@ typedef struct CCliUserArgs{
     bool clean_all;
     bool run;
 }CliArgs;
+#endif // !CLI_TYPES
 
 CLI_PREFIX bool cli_parse(CliArgs* args, const int argc, char** argv);
 

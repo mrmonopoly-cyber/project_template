@@ -1,5 +1,3 @@
-#pragma once
-
 //==================================dependencies================================================
 
 #include <assert.h>
@@ -55,7 +53,8 @@ struct                                  \
             ____RUN = NULL)
 
 //==================================type definitions===========================================
-
+#ifndef DEFS_TYPES
+#define DEFS_TYPES
 typedef struct GDef{
     const char* def;
     const char* val;
@@ -63,7 +62,7 @@ typedef struct GDef{
 
 typedef FAT_ARRAY_TEMPLATE(char*)   ArrayViewString;
 typedef FAT_ARRAY_TEMPLATE(GDef)    ArrayViewGDef;
-
+#endif // !DEFS_TYPES
 //==================================functions declarations======================================
 
 void apply_global_definitions(Cmd* cmd, ArrayViewGDef defs);
@@ -81,12 +80,11 @@ bool file_has_suffix(
         const char* const restrict file_name, const size_t len_file_name,
         const char* const restrict suffix, const size_t len_suffix);
 
-static inline bool file_has_suffix_with_null(
+bool file_has_suffix_with_null(
         const char* const restrict file_name,
-        const char* const restrict suffix)
-{
-    return file_has_suffix(file_name, strlen(file_name), suffix, strlen(suffix));
-}
+        const char* const restrict suffix);
+
+bool program_exists_on_path(const char* program_name);
 
 bool program_exsists_on_path(const char* program_name);
 
@@ -222,6 +220,28 @@ bool file_has_suffix(
     const char* file_name_suffix = file_name + len_file_name - len_suffix;
 
     return !strcmp(file_name_suffix, suffix);
+}
+
+bool file_has_suffix_with_null(
+        const char* const restrict file_name,
+        const char* const restrict suffix)
+{
+    return file_has_suffix(file_name, strlen(file_name), suffix, strlen(suffix));
+}
+
+bool vi_program_exists_on_path(const char* program_name)
+{
+    bool res=false;
+    Cmd cmd = {0};
+
+    cmd_append(&cmd, "bash");
+    cmd_append(&cmd, "-c");
+    cmd_append(&cmd, temp_sprintf("command -v %s", program_name));
+
+    res = cmd_run(&cmd);
+
+    cmd_free(cmd);
+    return res;
 }
 
 #endif // DEFS_IMPLEMENTATION
