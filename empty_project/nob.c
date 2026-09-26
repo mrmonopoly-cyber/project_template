@@ -120,6 +120,7 @@ int main(int argc, char **argv)
     GO_REBUILD_URSELF_PLUS(argc, argv,
             "./BuildDependencies/c_cli.h",
             "./BuildDependencies/cli.h",
+            "./BuildDependencies/build_tools/cmake.h",
 
             "./BuildDependencies/defs.h"
             );

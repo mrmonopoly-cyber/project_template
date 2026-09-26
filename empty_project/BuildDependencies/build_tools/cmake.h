@@ -1,27 +1,26 @@
-#include "../defs.h"
-#include "../nob.h"
-
 #ifndef CMAKE_PREFIX
 #define CMAKE_PREFIX
 #endif // !CMAKE_PREFIX
 
-//==========================================types================================================
+#include "../defs.h"
+#include "../nob.h"
+
 #ifndef CMAKE_TYPES
+#define CMAKE_TYPES
+//===================================types=======================================================
 typedef enum
 {
-   CmakeGenerator_Ninja             = 0, //default
-   CmakeGenerator_UnixMakefile,
-   CmakeGenerator_NinjaMultiConfig,
+   CmakeGenerator_Ninja                 = 0, //INFO: default
+   CmakeGenerator_UnixMakefiles,
    CmakeGenerator_FASTBuild,
-   CmakeGenerator_WatcomWMake,
 
-   CmakeGenerator__Count
+   _CmakeGenerator__Count,
 }CmakeGenerator;
 
 typedef struct
 {
     CmakeGenerator generator;
-    ArrayViewGDef cfg_opts;
+    ArrayViewGDef global_defs;
 }CmakeConfigureOpt;
 
 typedef struct
@@ -30,79 +29,64 @@ typedef struct
     Procs* async;
 }CmakeBuildOpt;
 
-#define CMAKE_TYPES
 #endif // !CMAKE_TYPES
 
-//=======================================declarations============================================
-/**
-* By default Ninja, or the generator specified by the user, will be used if possible,
-* otherwise, as a fallback, UnixMakefile will be used
-* IF that is not possible it will return an error.
-*/
-CMAKE_PREFIX bool _cmake_configure(
-        const char* CmakeListsPath,
-        const char* build_dir,
-        const CmakeConfigureOpt opt);
-#define cmake_configure(CMAKE, CFG_OPTS, PATH, ...) \
-    _cmake_configure( (CMAKE), (CFG_OPTS), (PATH), (CmakeBuildOpt) {__VA_ARGS__} );
+//===================================declarations================================================
 
-CMAKE_PREFIX bool _cmake_build(
-        const char* build_dir,
-        const CmakeBuildOpt opt);
-#define cmake_build(CMAKE, CFG_OPTS, PATH, ...) \
-    _cmake_build( (CMAKE), (CFG_OPTS), (PATH), (CmakeBuildOpt) {__VA_ARGS__} );
+CMAKE_PREFIX bool
+_cmake_configure(const char* CMakeLists_path, const char* build_dir, const CmakeConfigureOpt opt);
+#define cmake_configure(CMAKELISTS_PATH, BUILD_DIR, ...) \
+    _cmake_configure( (CMAKELISTS_PATH), (BUILD_DIR), (CmakeConfigureOpt) {__VA_ARGS__})
 
+CMAKE_PREFIX bool
+_cmake_build(const char* build_dir, const CmakeBuildOpt opt);
+#define cmake_build(BUILD_DIR, ...) _cmake_build( (BUILD_DIR), (CmakeBuildOpt) {__VA_ARGS__})
 
-//======================================implementation===========================================
 #ifdef CMAKE_IMPLEMENTATION
-//====================================internal declarations======================================
-CMAKE_PREFIX const char* _cmake_generator_to_str(const CmakeGenerator gen);
-CMAKE_PREFIX bool _cmake_generator_is_usable(const CmakeGenerator gen);
+//===================================implementation==============================================
 
-CMAKE_PREFIX bool _cmake_configure(
-        const char* CmakeListsPath,
-        const char* build_dir,
-        const CmakeConfigureOpt opt)
+//==================================internal declarations========================================
+CMAKE_PREFIX const char* _cmake_generator_to_str(const CmakeGenerator gen);
+CMAKE_PREFIX const char* _cmake_generator_prog(const CmakeGenerator gen);
+
+CMAKE_PREFIX bool
+_cmake_configure(const char* CMakeLists_path, const char* build_dir, const CmakeConfigureOpt opt)
 {
-    bool res =false;
+    bool res = false;
+    const char* generator = _cmake_generator_to_str(opt.generator);
     Cmd cmd = {0};
 
-    if ( !CmakeListsPath || !build_dir ) goto end;
+    if ( !CMakeLists_path || !build_dir || !program_exists_on_path("cmake") ) goto end;
 
     cmd_append(&cmd, "cmake");
 
-    //source
-    {
-        cmd_append(&cmd, "-S");
-        cmd_append(&cmd, CmakeListsPath);
-    }
+    cmd_append(&cmd, "-S", CMakeLists_path);
+    cmd_append(&cmd, "-B", build_dir);
 
-    //build dir
+    cmd_append(&cmd, "-G");
+    if ( program_exists_on_path(_cmake_generator_prog(opt.generator)) )
     {
-        cmd_append(&cmd, "-B");
-        cmd_append(&cmd, build_dir);
+        cmd_append(&cmd, generator);
     }
-
-    //generator
+    else
     {
-        cmd_append(&cmd, "-G");
-        if ( _cmake_generator_is_usable(opt.generator) )
+        generator = _cmake_generator_to_str(CmakeGenerator_UnixMakefiles);
+        if ( program_exists_on_path(_cmake_generator_prog(CmakeGenerator_UnixMakefiles)) )
         {
-            cmd_append(&cmd, _cmake_generator_to_str(opt.generator));
-        }
-        else if ( _cmake_generator_is_usable(CmakeGenerator_UnixMakefile) )
-        {
-            cmd_append(&cmd, _cmake_generator_to_str(CmakeGenerator_UnixMakefile));
+            cmd_append(&cmd, generator);
         }
         else
         {
-            nob_log( ERROR, "Both Cmake generator %s and %s are not available. Aborting",
-                    _cmake_generator_to_str(opt.generator), _cmake_generator_to_str(opt.generator));
-            goto end;
+            nob_log(ERROR, 
+                    "cmake: both the generators: "
+                    "%s and %s are not available in your system. Abort",
+                    _cmake_generator_to_str(opt.generator),
+                    _cmake_generator_to_str(CmakeGenerator_UnixMakefiles));
         }
     }
-    //global variables
-    apply_global_definitions(&cmd, opt.cfg_opts);
+
+    apply_global_definitions(&cmd, opt.global_defs);
+
     res = cmd_run(&cmd);
 
 end:
@@ -110,61 +94,52 @@ end:
     return res;
 }
 
-CMAKE_PREFIX bool _cmake_build(
-        const char* build_dir,
-        const CmakeBuildOpt opt)
+CMAKE_PREFIX bool
+_cmake_build(const char* build_dir, const CmakeBuildOpt opt)
 {
-    bool res =false;
+    bool res = false;
     Cmd cmd = {0};
-    size_t jobs = nprocs();
+    const size_t jobs = opt.jobs && opt.jobs < (size_t) nprocs() ? opt.jobs : (size_t) nprocs();
 
-    if ( opt.jobs && opt.jobs < (size_t) nprocs() )
-    {
-        jobs = opt.jobs;
-    }
-
-    if ( !build_dir ) goto end;
+    if ( !build_dir || !program_exists_on_path("cmake") ) goto end;
 
     cmd_append(&cmd, "cmake");
     cmd_append(&cmd, "--build", build_dir);
     cmd_append(&cmd, "-j", temp_sprintf("%zu", jobs));
-    if ( !(res = cmd_run(&cmd, .async = opt.async)) ) goto end;
+
+    res = cmd_run(&cmd, .async = opt.async);
 
 end:
     cmd_free(cmd);
     return res;
 }
 
-//====================================internal implementation=====================================
+//==================================internal implementation======================================
+#include <assert.h>
 
 CMAKE_PREFIX const char* _cmake_generator_to_str(const CmakeGenerator gen)
 {
     switch (gen)
     {
-        case CmakeGenerator_Ninja:              return "Ninja";
-        case CmakeGenerator_UnixMakefile:       return "Unix Makefiles";
-        case CmakeGenerator_NinjaMultiConfig:   return "Ninja Multi-Config";
-        case CmakeGenerator_FASTBuild:          return "FASTBuild";
-        case CmakeGenerator_WatcomWMake:        return "Watcom WMake";
-        case CmakeGenerator__Count:             assert( 0 && "unreachable" );
+        case CmakeGenerator_Ninja:                  return "Ninja";
+        case CmakeGenerator_UnixMakefiles:          return "Unix Makefiles";
+        case CmakeGenerator_FASTBuild:              return "fbuild";
+        case _CmakeGenerator__Count:                assert( 0 && "unreachable");
     }
-
-    assert( 0 && "unreachable" );
+    assert( 0 && "unreachable");
 }
 
-CMAKE_PREFIX bool _cmake_generator_is_usable(const CmakeGenerator gen)
+CMAKE_PREFIX const char* _cmake_generator_prog(const CmakeGenerator gen)
 {
     switch (gen)
     {
-        case CmakeGenerator_Ninja:              return program_exists_on_path("ninja");
-        case CmakeGenerator_UnixMakefile:       return program_exists_on_path("make");
-        case CmakeGenerator_NinjaMultiConfig:   assert( 0 && "TODO: not yet implemented" );
-        case CmakeGenerator_FASTBuild:          assert( 0 && "TODO: not yet implemented" );
-        case CmakeGenerator_WatcomWMake:        assert( 0 && "TODO: not yet implemented" );
-        case CmakeGenerator__Count:             assert( 0 && "unreachable" );
+        case CmakeGenerator_Ninja:                  return "ninja";
+        case CmakeGenerator_UnixMakefiles:          return "make";
+        case CmakeGenerator_FASTBuild:              return "FASTBuild";
+        case _CmakeGenerator__Count:                assert( 0 && "unreachable");
+          break;
     }
-
-    assert( 0 && "unreachable" );
+    assert( 0 && "unreachable");
 }
 
-#endif // CMAKE_IMPLEMENTATION
+#endif //CMAKE_IMPLEMENTATION
