@@ -36,11 +36,11 @@ typedef struct
 CMAKE_PREFIX bool
 _cmake_configure(const char* CMakeLists_path, const char* build_dir, const CmakeConfigureOpt opt);
 #define cmake_configure(CMAKELISTS_PATH, BUILD_DIR, ...) \
-    _cmake_configure( (CMAKELISTS_PATH), (BUILD_DIR), (CmakeConfigureOpt) {__VA_ARGS__})
+    _cmake_configure( (CMAKELISTS_PATH), (BUILD_DIR), ((CmakeConfigureOpt) {__VA_ARGS__}))
 
 CMAKE_PREFIX bool
 _cmake_build(const char* build_dir, const CmakeBuildOpt opt);
-#define cmake_build(BUILD_DIR, ...) _cmake_build( (BUILD_DIR), (CmakeBuildOpt) {__VA_ARGS__})
+#define cmake_build(BUILD_DIR, ...) _cmake_build( (BUILD_DIR), ((CmakeBuildOpt) {__VA_ARGS__}))
 
 #ifdef CMAKE_IMPLEMENTATION
 //===================================implementation==============================================
