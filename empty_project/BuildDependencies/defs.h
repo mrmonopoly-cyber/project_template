@@ -8,6 +8,10 @@
 
 //==================================macros======================================================
 
+#ifndef DEFS_PREFIX
+#define DEFS_PREFIX
+#endif // !DEFS_PREFIX
+
 #define ArraySize(ARR) (sizeof(ARR)/sizeof(ARR[0]))
 
 #ifndef CC
@@ -65,34 +69,34 @@ typedef FAT_ARRAY_TEMPLATE(GDef)    ArrayViewGDef;
 #endif // !DEFS_TYPES
 //==================================functions declarations======================================
 
-void apply_global_definitions(Cmd* cmd, ArrayViewGDef defs);
+DEFS_PREFIX void apply_global_definitions(Cmd* cmd, ArrayViewGDef defs);
 
-ArrayViewString default_src_dir_opts(void);
-ArrayViewString default_compiler_opts(void);
-ArrayViewString default_linker_opts(void);
-ArrayViewString default_include_path_opts(void);
-ArrayViewGDef default_global_defs_opts(void);
+DEFS_PREFIX ArrayViewString default_src_dir_opts(void);
+DEFS_PREFIX ArrayViewString default_compiler_opts(void);
+DEFS_PREFIX ArrayViewString default_linker_opts(void);
+DEFS_PREFIX ArrayViewString default_include_path_opts(void);
+DEFS_PREFIX ArrayViewGDef default_global_defs_opts(void);
 
-void apply_all_defualt_compile_opts(Cmd* cmd);
-void apply_all_defualt_linker_opts(Cmd* cmd);
+DEFS_PREFIX void apply_all_defualt_compile_opts(Cmd* cmd);
+DEFS_PREFIX void apply_all_defualt_linker_opts(Cmd* cmd);
 
-bool file_has_suffix(
+DEFS_PREFIX bool file_has_suffix(
         const char* const restrict file_name, const size_t len_file_name,
         const char* const restrict suffix, const size_t len_suffix);
 
-bool file_has_suffix_with_null(
+DEFS_PREFIX bool file_has_suffix_with_null(
         const char* const restrict file_name,
         const char* const restrict suffix);
 
-bool program_exists_on_path(const char* program_name);
+DEFS_PREFIX bool program_exists_on_path(const char* program_name);
 
-bool program_exsists_on_path(const char* program_name);
+DEFS_PREFIX bool program_exsists_on_path(const char* program_name);
 
 //================================implementation================================================
 
 #ifdef DEFS_IMPLEMENTATION
 
-void apply_global_definitions(Cmd* cmd, ArrayViewGDef defs)
+DEFS_PREFIX void apply_global_definitions(Cmd* cmd, ArrayViewGDef defs)
 {
     assert(cmd);
 
@@ -111,7 +115,7 @@ void apply_global_definitions(Cmd* cmd, ArrayViewGDef defs)
 
 }
 
-void apply_all_defualt_compile_opts(Cmd* cmd)
+DEFS_PREFIX void apply_all_defualt_compile_opts(Cmd* cmd)
 {
     assert(cmd);
 
@@ -131,7 +135,7 @@ void apply_all_defualt_compile_opts(Cmd* cmd)
     apply_global_definitions(cmd, default_global_defs_opts());
 }
 
-void apply_all_defualt_linker_opts(Cmd* cmd)
+DEFS_PREFIX void apply_all_defualt_linker_opts(Cmd* cmd)
 {
     assert(cmd);
 
@@ -142,22 +146,7 @@ void apply_all_defualt_linker_opts(Cmd* cmd)
 
 }
 
-bool program_exsists_on_path(const char* program_name)
-{
-    bool res=false;
-    Cmd cmd = {0};
-
-    cmd_append(&cmd, "bash");
-    cmd_append(&cmd, "-c");
-    cmd_append(&cmd, temp_sprintf("command -v %s", program_name));
-
-    res = cmd_run(&cmd);
-
-    cmd_free(cmd);
-    return res;
-}
-
-ArrayViewString default_src_dir_opts(void)
+DEFS_PREFIX ArrayViewString default_src_dir_opts(void)
 {
     static const char* opts[] = 
     {
@@ -168,7 +157,7 @@ ArrayViewString default_src_dir_opts(void)
     return (ArrayViewString) FAT_ARRAY_INIT(opts);
 }
 
-ArrayViewString default_compiler_opts(void)
+DEFS_PREFIX ArrayViewString default_compiler_opts(void)
 {
     static const char* opts[] = 
     {
@@ -181,7 +170,7 @@ ArrayViewString default_compiler_opts(void)
     return (ArrayViewString) FAT_ARRAY_INIT(opts);
 }
 
-ArrayViewString default_linker_opts(void)
+DEFS_PREFIX ArrayViewString default_linker_opts(void)
 {
     static const char* opts[] = 
     {
@@ -192,7 +181,7 @@ ArrayViewString default_linker_opts(void)
     return (ArrayViewString) FAT_ARRAY_INIT(opts);
 }
 
-ArrayViewString default_include_path_opts(void)
+DEFS_PREFIX ArrayViewString default_include_path_opts(void)
 {
     static const char* opts[] = 
     {
@@ -203,7 +192,7 @@ ArrayViewString default_include_path_opts(void)
     return (ArrayViewString) FAT_ARRAY_INIT(opts);
 }
 
-ArrayViewGDef default_global_defs_opts(void)
+DEFS_PREFIX ArrayViewGDef default_global_defs_opts(void)
 {
     static const GDef opts[] = 
     {
@@ -213,7 +202,7 @@ ArrayViewGDef default_global_defs_opts(void)
     return (ArrayViewGDef) FAT_ARRAY_INIT(opts);
 }
 
-bool file_has_suffix(
+DEFS_PREFIX bool file_has_suffix(
         const char* file_name, const size_t len_file_name,
         const char* suffix, const size_t len_suffix)
 {
@@ -222,14 +211,14 @@ bool file_has_suffix(
     return !strcmp(file_name_suffix, suffix);
 }
 
-bool file_has_suffix_with_null(
+DEFS_PREFIX bool file_has_suffix_with_null(
         const char* const restrict file_name,
         const char* const restrict suffix)
 {
     return file_has_suffix(file_name, strlen(file_name), suffix, strlen(suffix));
 }
 
-bool vi_program_exists_on_path(const char* program_name)
+DEFS_PREFIX bool program_exists_on_path(const char* program_name)
 {
     bool res=false;
     Cmd cmd = {0};
