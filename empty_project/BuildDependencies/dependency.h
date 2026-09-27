@@ -36,6 +36,11 @@ typedef struct
     DependencyInstaller* installer_f;
 }DependencyCheckerOpt;
 
+typedef struct
+{
+    const char* output_dir;
+}FetcherDownloadOpt;
+
 #endif // !DEPENDENCY_TYPES
 
 //===================================declarations================================================
@@ -53,7 +58,9 @@ DEPENDENCY_PREFIX const char* _check_dependency(const char* name, const Dependen
 #define check_dependency(NAME, ...) _check_dependency((NAME), ((DependencyCheckerOpt) {__VA_ARGS__}))
 
 DEPENDENCY_PREFIX bool
-fetcher_download(DependencyFetcher fetcher, const char* mirror, const char* output);
+_fetcher_download(DependencyFetcher fetcher, const char* mirror, FetcherDownloadOpt opt);
+#define fetcher_download(FETCHER, MIRROR, ...) \
+    _fetcher_download((FETCHER), (MIRROR), ((FetcherDownloadOpt) {__VA_ARGS__}))
 
 // #define DEPENDENCY_IMPLEMENTATION //enable for debugging
 #ifdef DEPENDENCY_IMPLEMENTATION
@@ -175,7 +182,12 @@ DEPENDENCY_PREFIX const char* _check_dependency(const char* name, const Dependen
     mkdir_if_not_exists(DEPENDENCY_LOCAL_PROGRAMS_DB_WORK);
 
     mkdir_if_not_exists(DEPENDENCY_LOCAL_PROGRAMS_DB_WORK);
-    if ( !fetcher_download(opt.fetcher, opt.download_mirror, DEPENDENCY_LOCAL_PROGRAMS_DB_WORK) )
+    if (
+            !fetcher_download(
+                opt.fetcher,
+                opt.download_mirror,
+                .output_dir= DEPENDENCY_LOCAL_PROGRAMS_DB_WORK)
+       )
     {
         goto end;
     }
@@ -218,17 +230,18 @@ DEPENDENCY_PREFIX bool _program_exists_on_path(const char* program_name)
     return res;
 }
 
-DEPENDENCY_PREFIX bool fetcher_download(
+DEPENDENCY_PREFIX bool _fetcher_download(
         DependencyFetcher fetcher,
         const char* mirror,
-        const char* output)
+        FetcherDownloadOpt opt)
 {
     bool res = false;
     Cmd cmd = {0};
 
     const struct _FetcherInfos* infos = NULL;
+    const char* output = opt.output_dir ? opt.output_dir : ".";
 
-    if ( !mirror || !output || fetcher >= _DependencyFetcher_Count )
+    if ( !mirror || !file_exists(output) || fetcher >= _DependencyFetcher_Count )
     {
         goto end;
     }
