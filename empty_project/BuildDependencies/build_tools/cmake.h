@@ -34,6 +34,7 @@ typedef struct
 
 typedef struct
 {
+    bool verbose;
     size_t jobs;
     Procs* async;
 }CmakeBuildOpt;
@@ -129,6 +130,7 @@ CMAKE_PREFIX bool _cmake_build(const char* build_dir, const CmakeBuildOpt opt)
 
     cmd_append(&cmd, cmake);
     cmd_append(&cmd, "--build", build_dir);
+    if ( opt.verbose ) cmd_append(&cmd, "--verbose");
     cmd_append(&cmd, "-j", temp_sprintf("%zu", jobs));
 
     res = cmd_run(&cmd, .async = opt.async);

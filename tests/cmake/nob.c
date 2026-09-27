@@ -52,7 +52,7 @@ bool run_test(const char* test_dir_abs_path, const char* test_root_dir)
             goto end;
         }
 
-        if ( !(res = cmake_build(test_dir_abs_path, .async = &procs)) )
+        if ( !(res = cmake_build(test_dir_abs_path, .verbose = true, .async = &procs)) )
         {
             goto end;
         }
