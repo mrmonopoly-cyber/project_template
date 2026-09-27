@@ -1,1 +1,5 @@
 compile_commands.json
+.cache/
+.cache
+.local_programs
+.local_programs/

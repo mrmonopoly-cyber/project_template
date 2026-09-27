@@ -88,12 +88,11 @@ DEFS_PREFIX bool file_has_suffix_with_null(
         const char* const restrict file_name,
         const char* const restrict suffix);
 
-DEFS_PREFIX bool program_exists_on_path(const char* program_name);
-
-DEFS_PREFIX bool program_exsists_on_path(const char* program_name);
+DEFS_PREFIX bool clear_dir(const char* const restrict path);
 
 //================================implementation================================================
 
+// #define DEFS_IMPLEMENTATION //enable for debugging
 #ifdef DEFS_IMPLEMENTATION
 
 DEFS_PREFIX void apply_global_definitions(Cmd* cmd, ArrayViewGDef defs)
@@ -218,18 +217,25 @@ DEFS_PREFIX bool file_has_suffix_with_null(
     return file_has_suffix(file_name, strlen(file_name), suffix, strlen(suffix));
 }
 
-DEFS_PREFIX bool program_exists_on_path(const char* program_name)
+DEFS_PREFIX bool _defs__delete(Walk_Entry entry)
 {
-    bool res=false;
-    Cmd cmd = {0};
+    delete_file(entry.path);
+    return true;
+}
 
-    cmd_append(&cmd, "bash");
-    cmd_append(&cmd, "-c");
-    cmd_append(&cmd, temp_sprintf("command -v %s", program_name));
+DEFS_PREFIX bool clear_dir(const char* const restrict path)
+{
+    bool res = false;
 
-    res = cmd_run(&cmd);
+    if ( get_file_type(path) == FILE_DIRECTORY )
+    {
+        res = walk_dir(
+                path,
+                _defs__delete,
+                .post_order = true,
+                );
+    }
 
-    cmd_free(cmd);
     return res;
 }
 

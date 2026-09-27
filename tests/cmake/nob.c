@@ -73,6 +73,9 @@ end:
 #define CMAKE_IMPLEMENTATION
 #include "build_tools/cmake.h"
 
+#define DEPENDENCY_IMPLEMENTATION
+#include "dependency.h"
+
 #define DEFS_IMPLEMENTATION
 #include "defs.h"
 

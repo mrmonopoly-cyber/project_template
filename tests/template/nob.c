@@ -44,6 +44,9 @@ end:
     return res;
 }
 
+#define DEPENDENCY_IMPLEMENTATION
+#include "dependency.h"
+
 #define TEMPLATE_IMPLEMENTATION
 #include "build_tools/template.h"
 

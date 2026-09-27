@@ -1,3 +1,4 @@
+#include "template/project/BuildDependencies/nob.h"
 #define CC "gcc"
 #include "../empty_project/BuildDependencies/defs.h"
 #include "../empty_project/BuildDependencies/nob.h"
@@ -91,10 +92,20 @@ static bool _run_test(const char* name)
     //run test
     {
         void* handle = dlopen(o_file_name, RTLD_NOW | RTLD_GLOBAL);
-        assert( handle );
+        if ( !handle )
+        {
+            nob_log(ERROR, "error loading %s: %s", o_file_name, dlerror());
+            res = false;
+            goto end;
+        }
 
         bool (*run_test)(const char* test_dir_abs_path, const char* test_root_dir) =  dlsym(handle, "run_test");
-        assert( run_test );
+        if ( !run_test )
+        {
+            nob_log(ERROR, "error loading run_test: %s", dlerror());
+            res = false;
+            goto end;
+        }
 
         mkdir_if_not_exists(temp_sprintf("%s/%s", BUILD_DIR, name));
 

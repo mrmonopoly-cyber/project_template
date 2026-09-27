@@ -88,10 +88,6 @@ DEFS_PREFIX bool file_has_suffix_with_null(
         const char* const restrict file_name,
         const char* const restrict suffix);
 
-DEFS_PREFIX bool program_exists_on_path(const char* program_name);
-
-DEFS_PREFIX bool program_exsists_on_path(const char* program_name);
-
 //================================implementation================================================
 
 #ifdef DEFS_IMPLEMENTATION
