@@ -1,3 +1,6 @@
 [submodule "tests/cmake/ThirdParty/wamr/wasm-micro-runtime"]
 	path = tests/cmake/ThirdParty/wamr/wasm-micro-runtime
 	url = https://github.com/wasm-micro-runtime/wasm-micro-runtime.git
+[submodule "tests/makefile/ThirdParty/raylib"]
+	path = tests/makefile/ThirdParty/raylib
+	url = https://github.com/raysan5/raylib.git
