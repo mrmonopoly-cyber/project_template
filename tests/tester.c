@@ -1,7 +1,7 @@
-#include "template/project/BuildDependencies/nob.h"
 #define CC "gcc"
 #include "../empty_project/BuildDependencies/defs.h"
 #include "../empty_project/BuildDependencies/nob.h"
+#include "../empty_project/BuildDependencies/dependency.h"
 #define TEST_UTILITIES
 #include "test_interface.h"
 
@@ -163,6 +163,29 @@ end:
     return res;
 }
 
+static bool _walk_delete(Walk_Entry entry)
+{
+    delete_file(entry.path);
+    return true;
+}
+
+static bool f_clean_nob(const char* prog_name_path)
+{
+    bool res = false;
+    const char* old = temp_sprintf("%s.old", prog_name_path);
+
+    delete_file(prog_name_path);
+    if ( file_exists(old) ) delete_file(old);
+
+    if ( !(res = walk_dir(DEPENDENCY_LOCAL_PROGRAMS_DB, _walk_delete, .post_order = true)) )
+    {
+        goto end;
+    }
+
+end:
+    return res;
+}
+
 #define FAIL(...) do{res=1; nob_log(ERROR, __VA_ARGS__); goto end;}while(0);
 int main(int argc, char **argv)
 {
@@ -170,10 +193,14 @@ int main(int argc, char **argv)
     CliArgs args = {0};
 
     GO_REBUILD_URSELF_PLUS(argc, argv,
-            "../empty_project/BuildDependencies/c_cli.h",
-            "../empty_project/BuildDependencies/cli.h",
+            PROJECT_ROOT"/../empty_project/BuildDependencies/c_cli.h",
+            PROJECT_ROOT"/../empty_project/BuildDependencies/cli.h",
+            PROJECT_ROOT"/../empty_project/BuildDependencies/dependency.h",
+            PROJECT_ROOT"/../empty_project/BuildDependencies/build_tools/cmake.h",
+            PROJECT_ROOT"/../empty_project/BuildDependencies/build_tools/makefile.h",
+            PROJECT_ROOT"/../empty_project/BuildDependencies/build_tools/template.h",
 
-            "../empty_project/BuildDependencies/defs.h"
+            PROJECT_ROOT"/../empty_project/BuildDependencies/defs.h"
             );
 
     set_log_handler(cancer_log_handler);
@@ -194,14 +221,10 @@ int main(int argc, char **argv)
         delete_file(BUILD_DIR);
     }
 
-    if ( args.clean_all )
+    if ( args.clean_all && !f_clean_nob(argv[0]))
     {
-        const char* name = nob_path_name(argv[0]);
-        delete_file(name);
-        if ( file_exists(temp_sprintf("%s.old", name)) )
-        {
-            delete_file(temp_sprintf("%s.old", name));
-        }
+        nob_log(ERROR, "failed cleaning nob");
+        return 1;
     }
 
     if ( args.test_to_run.all )
