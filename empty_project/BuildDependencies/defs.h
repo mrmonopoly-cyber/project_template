@@ -173,7 +173,6 @@ DEFS_PREFIX ArrayViewString default_linker_opts(void)
 {
     static const char* opts[] = 
     {
-        "-xnone",
         //add here your compiler options: -lm, -lgdb, ...
     };
 
