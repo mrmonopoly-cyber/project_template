@@ -1,6 +1,7 @@
 #include "BuildDependencies/defs.h"
 #include "BuildDependencies/cli.h"
 #include "BuildDependencies/nob.h"
+#include "BuildDependencies/dependency.h"
 
 static CliArgs args;
 
@@ -82,11 +83,7 @@ static bool f_run()
 
 static bool _walk_delete(Walk_Entry entry)
 {
-    if ( entry.type != FILE_DIRECTORY )
-    {
-        delete_file(entry.path);
-    }
-
+    delete_file(entry.path);
     return true;
 }
 
@@ -97,8 +94,10 @@ static bool f_clean()
 
     if ( file_exists(O_FILE) ) delete_file(O_FILE);
 
-    if ( !(res = walk_dir(BUILD_DIR, _walk_delete)) ) goto end;
-    delete_file(BUILD_DIR);
+    if ( !(res = walk_dir(BUILD_DIR, _walk_delete, .post_order = true)) )
+    {
+        goto end;
+    }
 
 end:
     cmd_free(cmd);
@@ -107,12 +106,19 @@ end:
 
 static bool f_clean_nob(const char* prog_name_path)
 {
+    bool res = false;
     const char* old = temp_sprintf("%s.old", prog_name_path);
 
     delete_file(prog_name_path);
     if ( file_exists(old) ) delete_file(old);
 
-    return true;
+    if ( !(res = walk_dir(DEPENDENCY_LOCAL_PROGRAMS_DB, _walk_delete, .post_order = true)) )
+    {
+        goto end;
+    }
+
+end:
+    return res;
 }
 
 int main(int argc, char **argv)
@@ -183,6 +189,9 @@ int main(int argc, char **argv)
 
   return 0;
 }
+
+#define DEPENDENCY_IMPLEMENTATION
+#include "BuildDependencies/dependency.h"
 
 #define DEFS_IMPLEMENTATION
 #include "BuildDependencies/defs.h"
