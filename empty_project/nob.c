@@ -1,3 +1,7 @@
+#if 0
+gcc -o /tmp/nob  nob.c && exec /tmp/nob "$@"
+#endif
+
 #include "BuildDependencies/defs.h"
 #include "BuildDependencies/cli.h"
 #include "BuildDependencies/nob.h"
