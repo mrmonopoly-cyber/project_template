@@ -33,6 +33,7 @@ typedef struct
     const char* download_mirror;
     DependencyFetcher fetcher;
     DependencyInstaller* installer_f;
+    bool ignore_path;
 }DependencyCheckerOpt;
 
 typedef struct
@@ -67,7 +68,7 @@ _fetcher_download(DependencyFetcher fetcher, const char* mirror, FetcherDownload
 #include <string.h>
 #include <assert.h>
 
-static char _db_dir[1024];
+static char _db_dir[512];
 static const char _fetcher_output_dir;
 static const char _fetcher_input_mirror;
 
@@ -161,7 +162,7 @@ DEPENDENCY_PREFIX const char* _check_dependency(const char* name, const Dependen
         mkdir_if_not_exists(_db_dir);
     }
 
-    if ( _program_exists_on_path(name) )
+    if ( !opt.ignore_path && _program_exists_on_path(name) )
     {
         nob_log(INFO, "found %s in PATH", name);
         res = name;
@@ -173,7 +174,8 @@ DEPENDENCY_PREFIX const char* _check_dependency(const char* name, const Dependen
         goto found;
     }
 
-    nob_log(INFO, "dependency missing: %s. Downloading it", name);
+    nob_log(INFO, "dependency missing: %s. Downloading it from: %s",
+            name, opt.download_mirror);
     if ( !_program_exists_on_path(fetcher) ||  !opt.download_mirror || !opt.installer_f )
     {
         nob_log(WARNING ,
@@ -203,7 +205,7 @@ DEPENDENCY_PREFIX const char* _check_dependency(const char* name, const Dependen
         goto end;
     }
 
-    snprintf(temp_buffer, sizeof(temp_buffer), "%s/%s",temp_work_dir, name);
+    snprintf(temp_buffer, sizeof(temp_buffer), "%s/%s", _db_dir, name);
     nob_log(INFO, "installing %s in: %s", name, temp_buffer);
     mkdir_if_not_exists(temp_buffer);
     if( !opt.installer_f(temp_work_dir, temp_buffer) )
