@@ -111,28 +111,6 @@ static bool f_run()
     return res;
 }
 
-static bool f_clean()
-{
-    if ( file_exists(O_FILE) ) delete_file(O_FILE);
-    if ( file_exists(BUILD_DIR) ) clear_dir(BUILD_DIR);
-
-    return true;
-}
-
-static bool f_clean_nob(const char* prog_name_path)
-{
-    bool res = false;
-    const char* old = temp_sprintf("%s.old", prog_name_path);
-
-    delete_file(prog_name_path);
-    if ( file_exists(old) ) delete_file(old);
-
-    lsp_clean();
-    res = dependency_clear();
-
-    return res;
-}
-
 int main(int argc, char **argv)
 {
     go_rebuild_yourself_check_dir(argc, argv, PROJECT_ROOT"/BuildDependencies");
@@ -187,16 +165,21 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    if ( args.clean && !f_clean() )
+    if ( args.clean )
     {
-        nob_log(ERROR, "failed cleaning");
-        return 1;
+        if ( file_exists(O_FILE) ) delete_file(O_FILE);
+        if ( file_exists(BUILD_DIR) ) clear_dir(BUILD_DIR);
     }
     
-    if ( args.clean_all && !f_clean_nob(argv[0]) )
+    if ( args.clean_all )
     {
-        nob_log(ERROR, "failed cleaning nob");
-        return 1;
+        const char* old = temp_sprintf("%s.old", argv[0]);
+
+        delete_file(argv[0]);
+        if ( file_exists(old) ) delete_file(old);
+
+        lsp_clean();
+        UNUSED(dependency_clear());
     }
 
   return 0;
