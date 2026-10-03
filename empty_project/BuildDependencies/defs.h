@@ -2,6 +2,7 @@
 
 #include <assert.h>
 #include <stddef.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "nob.h"
@@ -89,6 +90,11 @@ DEFS_PREFIX bool file_has_suffix_with_null(
         const char* const restrict suffix);
 
 DEFS_PREFIX bool clear_dir(const char* const restrict path);
+
+DEFS_PREFIX void
+_go_rebuild_yourself_check_dir(int argc, char** argv, const char *source_path, const char* dir_path);
+#define go_rebuild_yourself_check_dir(ARGC, ARGV, DIR_PATH) \
+    _go_rebuild_yourself_check_dir((ARGC), (ARGV), __FILE__, (DIR_PATH))
 
 //================================implementation================================================
 
@@ -236,6 +242,77 @@ DEFS_PREFIX bool clear_dir(const char* const restrict path)
     }
 
     return res;
+}
+
+struct _DefsAddFileToListArg
+{
+    bool found_diff;
+    const char* binary_path;
+};
+
+static inline bool _add_file_to_list(Walk_Entry entry)
+{
+    struct _DefsAddFileToListArg* data = entry.data;
+    NOB_ASSERT( data );
+
+    if (
+            entry.type == FILE_REGULAR &&
+            !data->found_diff &&
+            needs_rebuild1(data->binary_path, entry.path)
+       )
+    {
+        data->found_diff = true;
+    }
+
+    return true;
+}
+
+DEFS_PREFIX void
+_go_rebuild_yourself_check_dir(int argc, char** argv, const char *source_path, const char* dir_path)
+{
+    const char *binary_path = shift(argv, argc);
+    Cmd cmd = {0};
+    struct _DefsAddFileToListArg arg =
+    {
+        .found_diff = false,
+        .binary_path = binary_path,
+    };
+
+#ifdef _WIN32
+    // On Windows executables almost always invoked without extension, so
+    // it's ./nob, not ./nob.exe. For renaming the extension is a must.
+    if (!sv_ends_with_cstr(nob_sv_from_cstr(binary_path), ".exe")) {
+        binary_path = temp_sprintf("%s.exe", binary_path);
+    }
+#endif
+    UNUSED(walk_dir(dir_path, _add_file_to_list, .data = &arg));
+
+    if ( !needs_rebuild1(binary_path, source_path) && !arg.found_diff ) // no rebuild is needed
+    {
+        return;
+    }
+
+    const char *old_binary_path = temp_sprintf("%s.old", binary_path);
+
+    if (!nob_rename(binary_path, old_binary_path)) exit(1);
+    cmd_append(&cmd, NOB_REBUILD_URSELF(binary_path, source_path));
+    Cmd_Opt opt = {0};
+    if (!cmd_run_opt(&cmd, opt)) {
+        rename(old_binary_path, binary_path);
+        exit(1);
+    }
+
+#ifdef NOB_EXPERIMENTAL_DELETE_OLD
+    // TODO: this is an experimental behavior behind a compilation flag.
+    // Once it is confirmed that it does not cause much problems on both POSIX and Windows
+    // we may turn it on by default.
+    delete_file(old_binary_path);
+#endif // NOB_EXPERIMENTAL_DELETE_OLD
+
+    cmd_append(&cmd, binary_path);
+    da_append_many(&cmd, argv, argc);
+    if (!cmd_run_opt(&cmd, opt)) exit(1);
+    exit(0);
 }
 
 #endif // DEFS_IMPLEMENTATION

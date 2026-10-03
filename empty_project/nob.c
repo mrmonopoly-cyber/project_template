@@ -10,8 +10,8 @@ exit 0
 
 #include "BuildDependencies/defs.h"
 #include "BuildDependencies/cli.h"
-#include "BuildDependencies/nob.h"
 #include "BuildDependencies/dependency.h"
+#include "BuildDependencies/nob.h"
 
 static CliArgs args;
 
@@ -141,16 +141,7 @@ end:
 
 int main(int argc, char **argv)
 {
-    GO_REBUILD_URSELF_PLUS(argc, argv,
-            "./BuildDependencies/c_cli.h",
-            "./BuildDependencies/cli.h",
-            "./BuildDependencies/build_tools/cmake.h",
-            "./BuildDependencies/build_tools/makefile.h",
-            "./BuildDependencies/build_tools/template.h",
-
-            "./BuildDependencies/defs.h"
-            );
-
+    go_rebuild_yourself_check_dir(argc, argv, PROJECT_ROOT"/BuildDependencies");
 
     if ( !cli_parse(&args, argc, argv) )
     {
