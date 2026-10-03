@@ -1,6 +1,5 @@
 //==================================dependencies================================================
 
-#include <assert.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
@@ -103,7 +102,7 @@ _go_rebuild_yourself_check_dir(int argc, char** argv, const char *source_path, c
 
 DEFS_PREFIX void apply_global_definitions(Cmd* cmd, ArrayViewGDef defs)
 {
-    assert(cmd);
+    NOB_ASSERT(cmd);
 
     FOR_EACH_FAT_ARRAY(defs, def)
     {
@@ -122,7 +121,7 @@ DEFS_PREFIX void apply_global_definitions(Cmd* cmd, ArrayViewGDef defs)
 
 DEFS_PREFIX void apply_all_defualt_compile_opts(Cmd* cmd)
 {
-    assert(cmd);
+    NOB_ASSERT(cmd);
 
     //compiler options
     FOR_EACH_FAT_ARRAY_STR(default_compiler_opts(), opt)
@@ -142,7 +141,7 @@ DEFS_PREFIX void apply_all_defualt_compile_opts(Cmd* cmd)
 
 DEFS_PREFIX void apply_all_defualt_linker_opts(Cmd* cmd)
 {
-    assert(cmd);
+    NOB_ASSERT(cmd);
 
     FOR_EACH_FAT_ARRAY_STR(default_linker_opts(), opt)
     {

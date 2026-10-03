@@ -68,7 +68,6 @@ DEPENDENCY_PREFIX bool dependency_clear(void);
 #ifdef DEPENDENCY_IMPLEMENTATION
 //===================================implementation==============================================
 #include <string.h>
-#include <assert.h>
 
 static char _db_dir[512];
 static const char _fetcher_output_dir;
@@ -157,7 +156,7 @@ DEPENDENCY_PREFIX const char* _check_dependency(const char* name, const Dependen
         snprintf(_db_dir, sizeof(_db_dir), "%s/%s", pwd, DEPENDENCY_LOCAL_PROGRAMS_DB);
     }
 
-    assert( _db_dir[0] );
+    NOB_ASSERT( _db_dir[0] );
     temp_work_dir = temp_sprintf("%s/work", _db_dir);
     if ( !file_exists(_db_dir) )
     {
@@ -222,7 +221,7 @@ DEPENDENCY_PREFIX const char* _check_dependency(const char* name, const Dependen
 
 found:
     res = realpath(temp_buffer, NULL);
-    assert( res != NULL );
+    NOB_ASSERT( res != NULL );
     nob_log(INFO, "found %s in local db dir: %s at: %s", temp_work_dir, name, res);
 
 end:
@@ -339,7 +338,7 @@ DEPENDENCY_PREFIX bool _db_sarch_program(
         char* o_buffer,
         const size_t o_buffer_size)
 {
-    assert( _db_dir[0] );
+    NOB_ASSERT( _db_dir[0] );
     const char* root = opt_root ? opt_root : _db_dir;
     _DepDBChecker data = 
     {
@@ -349,8 +348,8 @@ DEPENDENCY_PREFIX bool _db_sarch_program(
         .found = false,
     };
 
-    assert( prog_name );
-    assert( o_buffer );
+    NOB_ASSERT( prog_name );
+    NOB_ASSERT( o_buffer );
 
     (void) walk_dir(root, _db_serach_program_check_file, .data = &data);
 

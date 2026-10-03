@@ -143,7 +143,6 @@ end:
 }
 
 //==================================internal implementation======================================
-#include <assert.h>
 
 CMAKE_PREFIX const char* _cmake_generator_to_str(const CmakeGenerator gen)
 {
@@ -152,9 +151,9 @@ CMAKE_PREFIX const char* _cmake_generator_to_str(const CmakeGenerator gen)
         case CmakeGenerator_Ninja:                  return "Ninja";
         case CmakeGenerator_UnixMakefiles:          return "Unix Makefiles";
         case CmakeGenerator_FASTBuild:              return "fbuild";
-        case _CmakeGenerator__Count:                assert( 0 && "unreachable");
+        case _CmakeGenerator__Count:                NOB_ASSERT( 0 && "unreachable");
     }
-    assert( 0 && "unreachable");
+    NOB_ASSERT( 0 && "unreachable");
 }
 
 CMAKE_PREFIX const char* _cmake_generator_prog(const CmakeGenerator gen)
@@ -164,10 +163,10 @@ CMAKE_PREFIX const char* _cmake_generator_prog(const CmakeGenerator gen)
         case CmakeGenerator_Ninja:                  return "ninja";
         case CmakeGenerator_UnixMakefiles:          return "make";
         case CmakeGenerator_FASTBuild:              return "FASTBuild";
-        case _CmakeGenerator__Count:                assert( 0 && "unreachable");
+        case _CmakeGenerator__Count:                NOB_ASSERT( 0 && "unreachable");
           break;
     }
-    assert( 0 && "unreachable");
+    NOB_ASSERT( 0 && "unreachable");
 }
 
 CMAKE_PREFIX bool _cmake_installer(const char* work_dir, const char* bin_dst_path)
@@ -178,8 +177,8 @@ CMAKE_PREFIX bool _cmake_installer(const char* work_dir, const char* bin_dst_pat
     const char* tar = NULL;
     Cmd cmd = {0};
 
-    assert( work_dir );
-    assert( bin_dst_path );
+    NOB_ASSERT( work_dir );
+    NOB_ASSERT( bin_dst_path );
 
     if ( !(tar = check_dependency("tar")) ) goto end;
 

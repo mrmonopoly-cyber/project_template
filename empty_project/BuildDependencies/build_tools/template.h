@@ -37,7 +37,6 @@ _external_project_template(
 
 #ifdef TEMPLATE_IMPLEMENTATION
 //===================================implementation==============================================
-#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -54,7 +53,7 @@ _external_project_template(
     const char* prog_name = temp_file_name(project_root);
     const char* builder = opt.builder ? opt.builder : "nob";
     const char* full_prog_name = strdup(temp_sprintf("./%s/%s_%s", BUILD_DIR, builder, prog_name));
-    assert( full_prog_name );
+    NOB_ASSERT( full_prog_name );
 
     if ( !project_root || !build_dir ) goto end;
 
