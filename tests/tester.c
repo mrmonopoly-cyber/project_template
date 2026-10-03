@@ -1,3 +1,13 @@
+#if 0
+if [[ ! -f ./nob ]]
+then
+echo "Bootrap: tester is not present"
+cc -o tester tester.c;
+fi
+exec ./tester "$@"
+exit 0
+#endif
+
 #define CC "gcc"
 #include "../empty_project/BuildDependencies/defs.h"
 #include "../empty_project/BuildDependencies/nob.h"
@@ -63,7 +73,6 @@ static bool _run_test(const char* name)
     //compile test
     {
         res = true;
-        if ( needs_rebuild1(o_file_name, file_src) )
         {
             Cmd cmd = {0};
 
@@ -171,13 +180,16 @@ static bool _walk_delete(Walk_Entry entry)
 
 static bool f_clean_nob(const char* prog_name_path)
 {
-    bool res = false;
+    bool res = true;
     const char* old = temp_sprintf("%s.old", prog_name_path);
 
     delete_file(prog_name_path);
     if ( file_exists(old) ) delete_file(old);
 
-    if ( !(res = walk_dir(DEPENDENCY_LOCAL_PROGRAMS_DB, _walk_delete, .post_order = true)) )
+    if (
+            file_exists(DEPENDENCY_LOCAL_PROGRAMS_DB) &&
+            !(res = walk_dir(DEPENDENCY_LOCAL_PROGRAMS_DB, _walk_delete, .post_order = true))
+       )
     {
         goto end;
     }
@@ -199,6 +211,7 @@ int main(int argc, char **argv)
             PROJECT_ROOT"/../empty_project/BuildDependencies/build_tools/cmake.h",
             PROJECT_ROOT"/../empty_project/BuildDependencies/build_tools/makefile.h",
             PROJECT_ROOT"/../empty_project/BuildDependencies/build_tools/template.h",
+            PROJECT_ROOT"/../empty_project/BuildDependencies/build_tools/python.h",
 
             PROJECT_ROOT"/../empty_project/BuildDependencies/defs.h"
             );

@@ -3,3 +3,5 @@ compile_commands.json
 .cache
 .local_programs
 .local_programs/
+tester.old
+tester
