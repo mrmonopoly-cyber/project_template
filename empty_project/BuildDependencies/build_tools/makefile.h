@@ -15,6 +15,7 @@ typedef struct
     ArrayViewGDef defs;
     size_t jobs;
     Procs* async;
+    bool ignore_result;
 }MakefileRunCommandOpt;
 #endif // !MAKEFILE_TYPES
 
@@ -35,7 +36,9 @@ MAKEFILE_PREFIX bool _makefile_run_command(const MakefileRunCommandOpt opt)
     bool res = false;
     Cmd cmd = {0};
     const char* make = NULL;
-    const size_t jobs = opt.jobs < (size_t) nprocs() ? opt.jobs : 0;
+
+    const size_t jobs = (opt.jobs > 0 && opt.jobs < (size_t) nprocs())
+        ? opt.jobs : (size_t) nprocs();
     char buf[32] = {0};
 
     //TODO: auto install make
@@ -66,7 +69,9 @@ MAKEFILE_PREFIX bool _makefile_run_command(const MakefileRunCommandOpt opt)
         cmd_append(&cmd, "-j", buf);
     }
 
-    res = cmd_run(&cmd, .async = opt.async);
+
+    bool temp_res = cmd_run(&cmd, .async = opt.async);
+    res = opt.ignore_result ? true : temp_res;
 
 end:
     cmd_free(cmd);
