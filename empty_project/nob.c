@@ -204,14 +204,4 @@ int main(int argc, char **argv)
   return 0;
 }
 
-#define DEPENDENCY_IMPLEMENTATION
-#include "BuildDependencies/dependency.h"
-
-#define DEFS_IMPLEMENTATION
-#include "BuildDependencies/defs.h"
-
-#define CLI_IMPLEMENTATION
-#include "BuildDependencies/cli.h"
-
-#define NOB_IMPLEMENTATION
-#include "BuildDependencies/nob.h"
+#include "BuildDependencies/implementation.h"

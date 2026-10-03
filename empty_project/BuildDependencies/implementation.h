@@ -1,0 +1,23 @@
+#pragma once
+
+#include "build_tools/implementation.h"
+
+#ifndef IMPLEMENTATION_EXCLUDE_DEPENDENCY
+#define DEPENDENCY_IMPLEMENTATION
+#include "dependency.h"
+#endif // !IMPLEMENTATION_EXCLUDE_DEPENDENCY
+
+#ifndef IMPLEMENTATION_EXCLUDE_DEFS
+#define DEFS_IMPLEMENTATION
+#include "defs.h"
+#endif // !IMPLEMENTATION_EXCLUDE_DEFS
+
+#ifndef IMPLEMENTATION_EXCLUDE_CLI
+#define CLI_IMPLEMENTATION
+#include "cli.h"
+#endif // !IMPLEMENTATION_EXCLUDE_CLI
+
+#ifndef IMPLEMENTATION_EXCLUDE_NOB
+#define NOB_IMPLEMENTATION
+#include "nob.h"
+#endif // !IMPLEMENTATION_EXCLUDE_NOB
