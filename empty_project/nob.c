@@ -1,5 +1,11 @@
 #if 0
-gcc -o /tmp/nob  nob.c && exec /tmp/nob "$@"
+if [[ ! -f ./nob ]]
+then
+echo "Bootrap: nob is not present"
+cc -o nob nob.c;
+fi
+exec ./nob "$@"
+exit 0
 #endif
 
 #include "BuildDependencies/defs.h"
