@@ -31,6 +31,8 @@ typedef struct
 PYTHON_PREFIX bool _python_run(const char* script_path, const PythonRunOpt opt);
 #define python_run(SCRIPT_PATH, ...) _python_run((SCRIPT_PATH), ((PythonRunOpt){__VA_ARGS__}))
 
+PYTHON_PREFIX const char* get_python(void);
+
 // #define PYTHON_IMPLEMENTATION //enable for debugging
 #ifdef PYTHON_IMPLEMENTATION
 //===================================implementation==============================================
@@ -38,8 +40,6 @@ PYTHON_PREFIX bool _python_run(const char* script_path, const PythonRunOpt opt);
 
 #include "../dependency.h"
 #include "makefile.h"
-
-static bool _python_installer(const char* work_dir, const char* bin_dst_path);
 
 PYTHON_PREFIX bool _python_run(const char* script_path, const PythonRunOpt opt)
 {
@@ -49,10 +49,7 @@ PYTHON_PREFIX bool _python_run(const char* script_path, const PythonRunOpt opt)
 
     if ( !script_path ) goto end;
 
-    if ( !(python = check_dependency("python" PYTHON_VERSION_BASE,
-                    .download_mirror = PYTHON_MIRROR,
-                    .installer_f = _python_installer,
-                    .ignore_path = true)) )
+    if ( !(python = get_python()) )
     {
         nob_log(ERROR, "Python is not present in your system. Abort" );
         goto end;
@@ -66,6 +63,15 @@ end:
     return res;
 }
 
+
+static bool _python_installer(const char* work_dir, const char* bin_dst_path);
+
+PYTHON_PREFIX const char* get_python(void)
+{
+    return check_dependency("python" PYTHON_VERSION_BASE,
+            .download_mirror = PYTHON_MIRROR,
+            .installer_f = _python_installer);
+}
 
 static bool _python_installer(const char* work_dir, const char* bin_dst_path)
 {
