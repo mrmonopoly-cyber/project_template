@@ -19,7 +19,7 @@ typedef struct
 
 static bool f_compile(Walk_Entry entry)
 {
-    FCompileArs* args = entry.data;
+    FCompileArs* comp_args = entry.data;
     bool res=true;
 
     if( entry.type == FILE_REGULAR && file_has_suffix_with_null(entry.path, ".c") )
@@ -28,7 +28,7 @@ static bool f_compile(Walk_Entry entry)
         const char* o_file =
             temp_sprintf("%s/%.*s.o", BUILD_DIR, (int) strlen(file_name)-2, file_name);
 
-        if ( needs_rebuild1(o_file, entry.path) )
+        if ( args.lsp || needs_rebuild1(o_file, entry.path) )
         {
             Cmd cmd = {0};
 
@@ -41,7 +41,16 @@ static bool f_compile(Walk_Entry entry)
 
             cmd_append(&cmd, entry.path);
 
-            res = cmd_run(&cmd, .async = args->procs);
+            if ( args.lsp )
+            {
+                nob_log(INFO, "running on lsp");
+                res = lsp_configure(&cmd);
+            }
+            else
+            {
+                res = cmd_run(&cmd, .async = comp_args->procs);
+            }
+
             cmd_free(cmd);
         }
     }
@@ -75,7 +84,15 @@ static bool f_link(void)
 
     apply_all_defualt_linker_opts(&cmd);
 
-    res = cmd_run(&cmd);
+    if ( args.lsp )
+    {
+        lsp_configure(&cmd);
+    }
+    else
+    {
+        res = cmd_run(&cmd);
+    }
+
 
     dir_entry_close(dir);
     cmd_free(cmd);
@@ -110,8 +127,7 @@ static bool f_clean_nob(const char* prog_name_path)
     delete_file(prog_name_path);
     if ( file_exists(old) ) delete_file(old);
 
-    dependency_clear();
-
+    lsp_clean();
     res = dependency_clear();
 
     return res;
@@ -125,6 +141,8 @@ int main(int argc, char **argv)
     {
         return 1;
     }
+
+    nob_log(INFO, "build: %d, lsp: %d", args.build, args.lsp);
 
     nob_log(INFO, "build directory: %s", BUILD_DIR);
     nob_log(INFO, "output file: %s", O_FILE);

@@ -10,6 +10,10 @@
 #include "cli.h"
 #endif // !BUILD_EXCLUDE_CLI
 
+#ifndef BUILD_EXCLUDE_LSP
+#include "lsp.h"
+#endif // !BUILD_EXCLUDE_LSP
+
 #ifndef BUILD_EXCLUDE_NOB
 #include "nob.h"
 #endif // !BUILD_EXCLUDE_NOB

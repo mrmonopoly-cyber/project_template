@@ -2,6 +2,11 @@
 
 #include "build_tools/implementation.h"
 
+#ifndef BUILD_EXCLUDE_LSP
+#define LSP_IMPLEMENTATION
+#include "lsp.h"
+#endif // !BUILD_EXCLUDE_LSP
+
 #ifndef BUILD_EXCLUDE_DEPENDENCY
 #define DEPENDENCY_IMPLEMENTATION
 #include "dependency.h"
