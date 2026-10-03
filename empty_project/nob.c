@@ -8,10 +8,7 @@ exec ./nob "$@"
 exit 0
 #endif
 
-#include "BuildDependencies/defs.h"
-#include "BuildDependencies/cli.h"
-#include "BuildDependencies/dependency.h"
-#include "BuildDependencies/nob.h"
+#include "BuildDependencies/build_dependencies.h"
 
 static CliArgs args;
 
