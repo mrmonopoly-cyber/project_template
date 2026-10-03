@@ -62,6 +62,8 @@ _fetcher_download(DependencyFetcher fetcher, const char* mirror, FetcherDownload
 #define fetcher_download(FETCHER, MIRROR, ...) \
     _fetcher_download((FETCHER), (MIRROR), ((FetcherDownloadOpt) {__VA_ARGS__}))
 
+DEPENDENCY_PREFIX bool dependency_clear(void);
+
 // #define DEPENDENCY_IMPLEMENTATION //enable for debugging
 #ifdef DEPENDENCY_IMPLEMENTATION
 //===================================implementation==============================================
@@ -291,6 +293,16 @@ DEPENDENCY_PREFIX bool _fetcher_download(
 
 end:
     cmd_free(cmd);
+    return res;
+}
+
+DEPENDENCY_PREFIX bool dependency_clear(void)
+{
+    bool res = true;
+    if ( _db_dir[0] && file_exists(_db_dir) )
+    {
+        res = clear_dir(_db_dir);
+    }
     return res;
 }
 

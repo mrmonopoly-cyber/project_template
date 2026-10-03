@@ -130,12 +130,10 @@ static bool f_clean_nob(const char* prog_name_path)
     delete_file(prog_name_path);
     if ( file_exists(old) ) delete_file(old);
 
-    if ( !(res = walk_dir(DEPENDENCY_LOCAL_PROGRAMS_DB, _walk_delete, .post_order = true)) )
-    {
-        goto end;
-    }
+    dependency_clear();
 
-end:
+    res = dependency_clear();
+
     return res;
 }
 
