@@ -88,35 +88,18 @@ static bool f_run()
     Cmd cmd = {0};
 
     cmd_append(&cmd, "./"O_FILE);
-
     res = cmd_run(&cmd);
-
 
     cmd_free(cmd);
     return res;
-}
-
-static bool _walk_delete(Walk_Entry entry)
-{
-    delete_file(entry.path);
-    return true;
 }
 
 static bool f_clean()
 {
-    bool res= false;
-    Cmd cmd = {0};
-
     if ( file_exists(O_FILE) ) delete_file(O_FILE);
+    if ( file_exists(BUILD_DIR) ) clear_dir(BUILD_DIR);
 
-    if ( !(res = walk_dir(BUILD_DIR, _walk_delete, .post_order = true)) )
-    {
-        goto end;
-    }
-
-end:
-    cmd_free(cmd);
-    return res;
+    return true;
 }
 
 static bool f_clean_nob(const char* prog_name_path)
