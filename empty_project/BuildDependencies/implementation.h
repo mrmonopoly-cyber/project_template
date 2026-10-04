@@ -12,6 +12,11 @@
 #include "dependency.h"
 #endif // !BUILD_EXCLUDE_DEPENDENCY
 
+#ifndef BUILD_EXCLUDE_GOTO_ROOT
+#define GOTO_ROOT_IMPLEMENTATION
+#include "goto_root.h"
+#endif // !BUILD_EXCLUDE_GOTO_ROOT
+
 #ifndef BUILD_EXCLUDE_DEFS
 #define DEFS_IMPLEMENTATION
 #include "defs.h"

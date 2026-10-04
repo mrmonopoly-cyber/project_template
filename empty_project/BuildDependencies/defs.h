@@ -91,9 +91,7 @@ DEFS_PREFIX bool file_has_suffix_with_null(
 DEFS_PREFIX bool clear_dir(const char* const restrict path);
 
 DEFS_PREFIX void
-_go_rebuild_yourself_check_dir(int argc, char** argv, const char *source_path, const char* dir_path);
-#define go_rebuild_yourself_check_dir(ARGC, ARGV, DIR_PATH) \
-    _go_rebuild_yourself_check_dir((ARGC), (ARGV), __FILE__, (DIR_PATH))
+go_rebuild_yourself_check_dir(int argc, char** argv, const char *source_path, const char* dir_path);
 
 //================================implementation================================================
 
@@ -267,7 +265,7 @@ static inline bool _add_file_to_list(Walk_Entry entry)
 }
 
 DEFS_PREFIX void
-_go_rebuild_yourself_check_dir(int argc, char** argv, const char *source_path, const char* dir_path)
+go_rebuild_yourself_check_dir(int argc, char** argv, const char *source_path, const char* dir_path)
 {
     const char *binary_path = shift(argv, argc);
     Cmd cmd = {0};

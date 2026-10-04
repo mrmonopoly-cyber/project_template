@@ -18,6 +18,11 @@
 #include "nob.h"
 #endif // !BUILD_EXCLUDE_NOB
 
+#ifndef BUILD_EXCLUDE_GOTO_ROOT
+#include "goto_root.h"
+#endif // !BUILD_EXCLUDE_GOTO_ROOT
+
 #ifndef BUILD_EXCLUDE_BUILD_TOOLS
 #include "build_tools/build_tools.h"
 #endif // !BUILD_EXCLUDE_BUILD_TOOLS
+

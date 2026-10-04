@@ -113,14 +113,13 @@ static bool f_run()
 
 int main(int argc, char **argv)
 {
-    go_rebuild_yourself_check_dir(argc, argv, PROJECT_ROOT"/BuildDependencies");
+    go_exec_yourself_on_project_root(argc, argv);
+    go_rebuild_yourself_check_dir(argc, argv, PROJECT_ROOT"/nob.c", PROJECT_ROOT"/BuildDependencies");
 
     if ( !cli_parse(&args, argc, argv) )
     {
         return 1;
     }
-
-    nob_log(INFO, "build: %d, lsp: %d", args.build, args.lsp);
 
     nob_log(INFO, "build directory: %s", BUILD_DIR);
     nob_log(INFO, "output file: %s", O_FILE);
