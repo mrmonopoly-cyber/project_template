@@ -15,11 +15,11 @@ static CliArgs args;
 typedef struct
 {
     Procs* procs;
-}FCompileArs;
+}FCompileArgs;
 
 static bool f_compile(Walk_Entry entry)
 {
-    FCompileArs* comp_args = entry.data;
+    FCompileArgs* comp_args = entry.data;
     bool res=true;
 
     if( entry.type == FILE_REGULAR && file_has_suffix_with_null(entry.path, ".c") )
@@ -116,10 +116,7 @@ int main(int argc, char **argv)
     go_exec_yourself_on_project_root(argc, argv);
     go_rebuild_yourself_check_dir(argc, argv, PROJECT_ROOT"/nob.c", PROJECT_ROOT"/BuildDependencies");
 
-    if ( !cli_parse(&args, argc, argv) )
-    {
-        return 1;
-    }
+    if ( !cli_parse(&args, argc, argv) ) return 1;
 
     nob_log(INFO, "build directory: %s", BUILD_DIR);
     nob_log(INFO, "output file: %s", O_FILE);
@@ -129,7 +126,7 @@ int main(int argc, char **argv)
     if ( args.build || args.run )
     {
         Procs procs = {0};
-        FCompileArs args = 
+        FCompileArgs args = 
         {
             .procs = &procs,
         };
@@ -174,7 +171,7 @@ int main(int argc, char **argv)
     {
         const char* old = temp_sprintf("%s.old", argv[0]);
 
-        delete_file(argv[0]);
+        UNUSED(delete_file(argv[0]));
         if ( file_exists(old) ) delete_file(old);
 
         lsp_clean();
