@@ -12,91 +12,16 @@ exit 0
 
 static CliArgs args;
 
-typedef struct
-{
-    Procs* procs;
-}FCompileArgs;
-
-static bool f_compile(Walk_Entry entry)
-{
-    FCompileArgs* comp_args = entry.data;
-    bool res=true;
-
-    if( entry.type == FILE_REGULAR && file_has_suffix_with_null(entry.path, ".c") )
-    {
-        const char* file_name = nob_temp_file_name(entry.path);
-        const char* o_file =
-            temp_sprintf("%s/%.*s.o", BUILD_DIR, (int) strlen(file_name)-2, file_name);
-
-        if ( args.lsp || needs_rebuild1(o_file, entry.path) )
-        {
-            Cmd cmd = {0};
-
-            cmd_append(&cmd, CC);
-
-            apply_all_defualt_compile_opts(&cmd);
-
-            cmd_append(&cmd, "-c");
-            cmd_append(&cmd, "-o", o_file);
-
-            cmd_append(&cmd, entry.path);
-
-            if ( args.lsp )
-            {
-                nob_log(INFO, "running on lsp");
-                res = lsp_configure(&cmd);
-            }
-            else
-            {
-                res = cmd_run(&cmd, .async = comp_args->procs);
-            }
-
-            cmd_free(cmd);
-        }
-    }
-
-    return res;
-}
-
 static bool f_link(void)
 {
-    Dir_Entry dir = {0};
-    Cmd cmd = {0};
-    bool res = true;
+    BuilderLinkerOptions linker_opts = {0};
+    ArrayViewString def_linker_opts = default_linker_opts();
+    da_append_many(&linker_opts, def_linker_opts.data, def_linker_opts.len);
 
-    if( !dir_entry_open(BUILD_DIR, &dir) ) return false;
-
-    cmd_append(&cmd, CC);
-
-    cmd_append(&cmd, "-o", O_FILE);
-
-    while( dir_entry_next(&dir) )
-    {
-        const char* file_path = temp_sprintf("%s/%s", BUILD_DIR, dir.name);
-        if (
-                get_file_type(file_path) ==  FILE_REGULAR &&
-                file_has_suffix_with_null(file_path, ".o")
-           )
-        {
-            cmd_append(&cmd, file_path);
-        }
-    }
-
-    apply_all_defualt_linker_opts(&cmd);
-
-    if ( args.lsp )
-    {
-        lsp_configure(&cmd);
-    }
-    else
-    {
-        res = cmd_run(&cmd);
-    }
-
-
-    dir_entry_close(dir);
-    cmd_free(cmd);
-    return res;
+    return builder_link_file_to_obj(O_FILE,
+            .linker_options = linker_opts,
+            .lsp = args.lsp,
+            );
 }
 
 static bool f_run()
@@ -126,10 +51,9 @@ int main(int argc, char **argv)
     if ( args.build || args.run )
     {
         Procs procs = {0};
-        FCompileArgs args = 
-        {
-            .procs = &procs,
-        };
+        BuilderCompilerOptions comp_opts = {0};
+        ArrayViewString def_comp_opts = default_compiler_opts();
+        da_append_many(&comp_opts, def_comp_opts.data, def_comp_opts.len);
 
         //source directories
         FOR_EACH_FAT_ARRAY_STR(default_src_dir_opts(), dir)
@@ -137,7 +61,16 @@ int main(int argc, char **argv)
             if( dir )
             {
                 nob_log(INFO, "compiling sources in src: %s", dir);
-                if( !walk_dir(dir, f_compile, .data = &args) )
+                if(
+                        !builder_compile_dir_files_to_obj(dir,
+                            .suffix = ".c",
+                            .comp_opt =
+                            {
+                            .async = &procs,
+                            .lsp = args.lsp,
+                            .compiler_options = comp_opts,
+                            })
+                  )
                 {
                     nob_log(ERROR, "failed compiling sources in %s", dir);
                     return 1;

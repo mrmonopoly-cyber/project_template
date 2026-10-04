@@ -2,6 +2,11 @@
 
 #include "build_tools/implementation.h"
 
+#ifndef BUILD_EXCLUDE_BUILDER
+#define BUILDER_IMPLEMENTATION
+#include "builder.h"
+#endif // !BUILD_EXCLUDE_BUILDER
+
 #ifndef BUILD_EXCLUDE_LSP
 #define LSP_IMPLEMENTATION
 #include "lsp.h"
